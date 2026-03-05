@@ -1,0 +1,21 @@
+1. What is NULL Object Pattern?
+
+The Null Object Pattern is a behavioral design pattern that provides a non-functional object as a substitute for null references.
+Instead of using null to indicate the absence of an object (which can lead to NullPointerException), this pattern uses a special
+object that implements default (do-nothing or neutral) behavior.
+
+Key Concepts:
+
+Problem: Using null in object-oriented programming leads to many null checks.
+
+Solution: Replace null with a neutral object that conforms to the expected interface but does nothing.
+
+Benefit: Eliminates the need for repetitive null checks and reduces chances of runtime exceptions.
+
+🧠 When to Use:
+
+When you want to avoid if (object != null) checks.
+
+When returning a default or neutral behavior is better than returning null.
+
+When your code should follow polymorphism over conditionals.

@@ -1,0 +1,46 @@
+1. What is the State Design Pattern?
+
+Allows an object to change its behavior when its internal state changes.
+Instead of using if-else conditions or switch statements to manage state transitions, each state is encapsulated in a separate class.
+
+2. How this Vending maching is example of State Design Pattern?
+
+A vending machine operates in multiple states, and each state controls what actions are allowed.
+
+Instead of using if-else statements, we create different classes for each state and allow the VendingMachine to
+transition between these states dynamically.
+
+Without the State Pattern (Using If-Else) A bad approach would be writing a single class with if-else conditions:
+
+if (state == NO_COIN) {
+   // Do something
+} else if (state == HAS_COIN) {
+   // Do something else
+} else if (state == DISPENSING) {
+   // Handle dispensing
+} else if (state == OUT_OF_STOCK) {
+   // Handle out of stock case
+}
+💥 Problem:
+
+The VendingMachine class would become huge and hard to maintain.
+Adding new states would require modifying the core class, breaking the Open-Closed Principle.
+
+✅ With the State Pattern
+
+Each state is encapsulated in its own class.
+The vending machine dynamically switches between states.
+No messy if-else conditions.
+Easy to extend (e.g., adding a "Maintenance Mode" state).
+------------------------------------------------------------------------------------------------------------------------
+
+3. What is an example of the State Pattern in the real world?
+
+A Vending Machine is a perfect example:
+
+If no coin is inserted → It waits for a coin.
+If a coin is inserted → It waits for product selection.
+If a product is selected → It dispenses the product.
+If no stock is left → It displays "Out of Stock."
+Each of these states can be represented as a separate class.
+

@@ -1,0 +1,47 @@
+Q1: What is the Command Pattern?
+
+The Command Pattern is a behavioral design pattern that encapsulates a request as an object, allowing the client to parameterize,
+queue, and execute commands at a later time.
+It helps in decoupling the sender and receiver.
+
+-----------------------------------------------------------------------------------------------------------
+-> Why Command Pattern?
+
+ If new feature is added to AC, then we need to add new methods in AC class. And also want to add new methods in Main class.
+
+So we want to change the client code and also client need to know the new methods added in AC class.
+
+-> But client should not know all this method, just he need to pass command as
+TURN ON rest of the things should be taken care by AC class.
+
+-> This is why we need to USE command pattern.
+---------------------------------------------------------------------------------------------------------------
+
+Q2: What are the main components of the Command Pattern?
+
+The Command Pattern consists of the following components:
+
+1. RECIEVER = AC
+2. COMMAND = All Commands, ON, OFF, etc
+3. INVOKER = Controll Remote.
+
+
+Command Interface - Defines an execute() method.
+Concrete Command - Implements execute() and invokes the action on the receiver.
+Receiver - The actual business logic that performs the action.
+Invoker - Stores and calls the command object when needed.
+Client - Creates commands and assigns them to the invoker.
+
+Q4: When should we use the Command Pattern?
+
+Use the Command Pattern when:
+
+You want to decouple request senders from request handlers.
+You need to implement undo/redo functionality.
+You need to queue requests for execution later (e.g., job scheduling).
+You want to log requests and replay them if needed.
+
+Q7: What is a Macro Command?
+
+A Macro Command is a command that stores multiple commands and executes them sequentially.
+

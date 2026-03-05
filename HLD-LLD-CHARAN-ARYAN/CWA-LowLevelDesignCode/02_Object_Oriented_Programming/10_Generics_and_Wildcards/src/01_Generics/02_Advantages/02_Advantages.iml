@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/01_Code_Reusability" isTestSource="false" packagePrefix="Generics.Advantages.Code_Reusability" />
+      <sourceFolder url="file://$MODULE_DIR$/02_Eliminates_Type_Casting" isTestSource="false" packagePrefix="Generics.Advantages.Eliminates_Type_Casting" />
+      <sourceFolder url="file://$MODULE_DIR$/03_Readability_Maintainability" isTestSource="false" packagePrefix="Generics.Advantages.Readability_Maintainability" />
+      <sourceFolder url="file://$MODULE_DIR$/04_Type_Safety" isTestSource="false" packagePrefix="Generics.Advantages.Type_Safety" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

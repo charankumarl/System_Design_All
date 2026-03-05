@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/01_Type_Consistency" isTestSource="false" packagePrefix="Generics_Vs_Wildcards.Generic_Over_Wildcards.Type_Consistency" />
+      <sourceFolder url="file://$MODULE_DIR$/02_Collection_Example" isTestSource="false" packagePrefix="Generics_Vs_Wildcards.Generic_Over_Wildcards.Collection_Example" />
+      <sourceFolder url="file://$MODULE_DIR$/03_Specific_Return_Type" isTestSource="false" packagePrefix="Generics_Vs_Wildcards.Generic_Over_Wildcards.Specific_Return_Type" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

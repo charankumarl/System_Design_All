@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/01_Thread_Synchronization_Methods/01_Synchronized_Method" isTestSource="false" packagePrefix="ThreadSynchronizationMethods.SynchronizedMethod" />
+      <sourceFolder url="file://$MODULE_DIR$/src/01_Thread_Synchronization_Methods/02_Synchronized_Block" isTestSource="false" packagePrefix="ThreadSynchronizationMethods.SynchronizedBlock" />
+      <sourceFolder url="file://$MODULE_DIR$/src/01_Thread_Synchronization_Methods/03_Volatile_Keyword" isTestSource="false" packagePrefix="ThreadSynchronizationMethods.VolatileKeyword" />
+      <sourceFolder url="file://$MODULE_DIR$/src/01_Thread_Synchronization_Methods/04_Atomic_Variables" isTestSource="false" packagePrefix="ThreadSynchronizationMethods.AtomicVariables" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

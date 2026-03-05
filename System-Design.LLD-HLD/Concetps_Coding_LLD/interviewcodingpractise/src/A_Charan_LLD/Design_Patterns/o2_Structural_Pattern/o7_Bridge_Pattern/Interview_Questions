@@ -1,0 +1,67 @@
+1. What is Bridge Pattern?
+
+ Bridge is a structural design pattern that lets you split a large class or a set of closely related classes into two separate
+ hierarchies—abstraction and implementation—which can be developed independently of each other.
+
+2. When to Use the Bridge Pattern?
+
+   ✅ When you need to separate abstraction from implementation.
+   ✅ When you don’t want to create many subclasses for different combinations.
+   ✅ When the implementation details might change frequently but should not affect the abstraction.
+
+3. Bridge Problem and Solution?
+
+    Problem Statement
+
+    If we have Shape (Circle, Rectangle, Triangle) and each can have multiple colors (Red, Blue, Green), we need to manage all combinations.
+    Using inheritance, we would have to create separate subclasses like:
+    RedCircle, BlueCircle, GreenCircle
+    RedRectangle, BlueRectangle, GreenRectangle
+    RedTriangle, BlueTriangle, GreenTriangle
+    Total combinations: 3 Shapes x 3 Colors = 9 subclasses! ❌
+
+    If we add one more color (Yellow), we need 3 more classes! ❌
+
+    🔹 Solution using Bridge Pattern
+    Separate Shape and Color into two independent hierarchies.
+    Use Composition instead of Inheritance.
+
+4. Solution?
+
+    step1 : Define the Implementor (Color Interface)
+
+    Step 2: Concrete Implementations of Color
+    These are specific color implementations.
+
+    Step 3: Define the Abstraction (Shape)
+    This represents different shapes, but the color is decoupled.
+
+    Step 4: Create Refined Abstractions (Shapes)
+    These are different shape implementations
+
+5.
+
+    Problem Solved Using Bridge Pattern
+
+    Problem	Before (Inheritance-based Solution)                                     	After (Bridge Pattern)
+    Scalability	Adding a new shape or color requires creating new subclasses.	    Just create a new Shape or Color class,
+                                                                                    without modifying existing code.
+
+    Class Explosion	Too many subclasses (CircleRed, CircleBlue, etc.).	            Separate hierarchies reduce redundancy.
+
+    Flexibility	Hard to change color implementation separately from shape.	        Color and Shape evolve independently.
+
+    Maintainability	Tight coupling between shape and color.	                            Loose coupling increases reusability.
+
+
+2. What problem does the Bridge Pattern solve?
+
+It prevents the explosion of subclasses when dealing with multiple dimensions of variability.
+
+8. When should you NOT use the Bridge Pattern?
+
+❌ When the abstraction and implementation do not need to be separated
+❌ If there are no multiple variations (no need for independent hierarchies)
+❌ If the system is simple enough without it
+
+

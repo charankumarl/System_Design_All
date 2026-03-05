@@ -1,0 +1,24 @@
+1. What is the Observer Pattern?
+
+The Observer Pattern is a behavioral design pattern that defines a one-to-many dependency between objects.
+When the state of one object changes, all its dependents are notified and updated automatically.
+
+Observable object will maintain the list of all oberservers (dependents) and notify them when there is a change in its state.
+
+2. When should you use the Observer Pattern?
+
+   Use it when:
+
+   You need a one-to-many relationship where multiple objects should be notified of state changes.
+   You want to implement a publisher-subscriber mechanism.
+
+   Event-driven programming (GUI frameworks, game engines).
+   Stock market applications (notify investors when stock prices change).
+   Weather monitoring systems.
+
+3. What are the main components of the Observer Pattern?
+
+Subject (Observable) – Maintains a list of observers and notifies them of changes.
+Observers – Objects that receive updates from the subject.
+Concrete Subject – The actual class whose state changes.
+Concrete Observers – The classes that react to state changes.

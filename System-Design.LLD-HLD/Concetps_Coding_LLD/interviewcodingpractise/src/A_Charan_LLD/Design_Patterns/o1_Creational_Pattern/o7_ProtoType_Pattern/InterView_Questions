@@ -1,0 +1,46 @@
+1. How super.clone() Works
+
+Creates a new object:
+super.clone() creates a shallow copy of the object.
+It copies primitive fields directly.
+It copies references for objects, meaning changes to mutable fields (like lists, maps, or other objects) in one instance
+will reflect in the other.
+Does NOT call constructors:
+Unlike new Car(...), clone() does not invoke constructors.
+
+2. Shallow Copy and Deep Copy
+
+1. Shallow Copy
+Copies only the references of nested objects (not the actual objects).
+Changes to a nested object in one copy reflect in the other copy.
+Created using super.clone() (default behavior).
+
+2. Deep Copy
+Creates new copies of nested objects.
+Changes in the cloned object do not affect the original.
+Must be manually implemented (clone inner objects separately).
+----------------------------------------------------------------------------------------------------------------------------
+
+1️⃣ What is the Prototype Design Pattern?
+
+The Prototype Pattern is a creational design pattern used when object creation is costly. Instead of creating a new instance,
+ we clone an existing object.
+
+2️⃣ Why do we need the Prototype Pattern?
+
+Object creation can be expensive (e.g., loading large datasets).
+Cloning is faster than instantiating a new object.
+Helps in maintaining encapsulation by hiding object creation details.
+
+Shallow Copy	                                                    Deep Copy
+Copies object reference.	                                Copies object along with its referenced objects.
+Changes in cloned object reflect in the original.	    Changes in cloned object do NOT affect the original.
+Uses super.clone().	                                        Manually clones nested objects.
+
+5️⃣ What is the difference between super.clone() and manually cloning fields?
+
+super.clone() performs shallow copy (copies references, not objects).
+Manually cloning fields allows deep copy.
+
+
+When you call clone(), you get a new object — not the existing one.

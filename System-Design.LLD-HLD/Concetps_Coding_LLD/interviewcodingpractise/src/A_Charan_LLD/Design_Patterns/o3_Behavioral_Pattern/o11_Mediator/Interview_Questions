@@ -1,0 +1,20 @@
+1. Introduction to Mediator Pattern
+
+The Mediator Pattern is a behavioral design pattern that reduces direct dependencies between multiple objects by introducing a
+mediator object that facilitates communication between them. Instead of objects communicating directly, they communicate via a
+central mediator.
+
+Q2. What problem does the Mediator Pattern solve?
+
+It reduces tight coupling between objects by introducing a central mediator that manages their interactions.
+
+Q3. What are the key components of the Mediator Pattern?
+
+Mediator Interface → Defines communication methods.
+Concrete Mediator → Implements communication logic.
+Colleague Interface → Represents objects that communicate via the mediator.
+Concrete Colleague → Objects that send and receive messages.
+
+Q5. Can the Mediator Pattern introduce performance issues?
+
+Yes, if too much logic is moved into the mediator, it can become a bottleneck and increase complexity.

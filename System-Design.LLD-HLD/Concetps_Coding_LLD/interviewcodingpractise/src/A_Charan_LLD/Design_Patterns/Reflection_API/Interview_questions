@@ -1,0 +1,19 @@
+11. What is Reflection API:
+
+ The Reflection API in Java allows you to inspect, analyze, and manipulate classes, methods, fields, and constructors at runtime,
+ even if you don't know their names at compile time.
+
+ 12. What is ?
+
+    Class<T> is a generic class that represents a class or interface at runtime.
+    ? means "any type" (unknown generic type).
+    This allows clazz to hold a Class reference for any type, without knowing the exact type at compile-time.
+
+  13. How to Prevent Reflection from Breaking Singleton
+
+      We can throw an exception inside the constructor if it is already initialized.
+      private Singleton() {
+              if (instance != null) {
+                  throw new RuntimeException("Use getInstance() to create an object");
+              }
+          }

@@ -1,0 +1,52 @@
+1. What is the Adapter Design Pattern?
+
+   The Adapter Pattern is a structural design pattern that allows two incompatible interfaces to work together.
+   It acts as a bridge between two incompatible classes by converting one interface into another that a client expects.
+
+2. When to Use the Adapter Pattern?
+
+   When you have existing code that cannot be modified but needs to work with a new system.
+   When you need to integrate a third-party library that has an incompatible interface.
+   When migrating to a new API while keeping old clients functional.
+
+3. Classes involved in the pattern:
+
+   1️⃣ Target – The expected interface by the client.
+   2️⃣ Adaptee – The existing interface that needs to be adapted.
+   3️⃣ Adapter – A class that converts the Adaptee to match the Target.
+   4️⃣ Client – The system that interacts with Target.
+
+4. Scenario :
+
+    Scenario:
+    Suppose we have an existing payment gateway (Razorpay) that we want to integrate into our new payment system (PayPal).
+    However, both have different interfaces. We will use an adapter to make them compatible.
+
+    🔹 Step 1: Define the Target Interface (New Payment System)
+    This is the interface that the client expects.
+
+    Step 2: Define the Adaptee (Existing Payment System with Different Interface)
+    This is an existing class that has a different method signature.
+
+    🔹 Step 3: Create an Adapter Class to Bridge the Gap
+    This class implements PaymentGateway and internally uses Razorpay.
+
+    What happens here?
+
+    The processPayment(String, double) method calls the makePayment(String, double) method inside the adapter.
+    We format the customer name to an email (assumption for demo).
+    The client does not see any changes and continues using PaymentGateway as expected.
+
+    Step 4: Client Code Using the Adapter
+    The client only knows about PaymentGateway and does not care about Razorpay.
+
+2️⃣ What are the key components of the Adapter Pattern?
+
+The Adapter Pattern consists of:
+
+Target → The interface expected by the client.
+Adaptee → The existing class that needs adaptation.
+Adapter → A class that bridges the gap between Target and Adaptee.
+Client → Uses Target without knowing about Adaptee.
+
+

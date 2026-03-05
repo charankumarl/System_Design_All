@@ -1,0 +1,21 @@
+1️⃣ What is the Factory Method Pattern?
+
+The Factory Method Pattern is a creational design pattern that provides an interface for creating objects but allows subclasses
+to alter the type of objects that will be created. It helps in achieving loose coupling and encapsulation by delegating object
+creation to a factory class instead of using new directly.
+
+2️⃣ Why do we need the Factory Method Pattern?
+
+Encapsulation → Hides object creation logic from the client.
+Loose Coupling → Client depends on the factory, not concrete implementations.
+Flexibility → New product types can be added without modifying existing code.
+Scalability → Factory logic can be extended for complex object creation.
+
+5️⃣ How do you implement the Factory Method Pattern in Java?
+
+✅ Define an interface (e.g., Transport).
+✅ Create concrete classes (e.g., Car, Bike).
+✅ Implement a Factory Class (TransportFactory).
+✅ Use the factory method in client code.
+
+

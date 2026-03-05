@@ -1,0 +1,19 @@
+1️⃣ What is the Proxy Design Pattern?
+
+The Proxy Pattern provides an intermediary between a client and the actual object, controlling access and adding functionalities
+like security, logging, caching, and remote access.
+
+2️⃣ Why is the Proxy Pattern used?
+
+Lazy Initialization (Virtual Proxy) – Load expensive objects only when needed.
+Security Control (Protection Proxy) – Restrict access based on user roles.
+Logging & Monitoring – Track access and method calls.
+Remote Access (Remote Proxy) – Handle objects in different locations (e.g., APIs, databases).
+Caching (Smart Proxy) – Store frequently accessed data to improve performance.
+
+3️⃣ What are the different types of Proxy Patterns?
+
+1️⃣ Virtual Proxy – Lazy loads the real object.
+2️⃣ Protection Proxy – Restricts access based on permissions.
+3️⃣ Remote Proxy – Represents an object on a remote server (e.g., RMI, API Gateway).
+4️⃣ Smart Proxy – Adds additional behavior like logging, caching, etc.

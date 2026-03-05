@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/01_Basic_Example" isTestSource="false" packagePrefix="CompletableFutureExamples.BasicExample" />
+      <sourceFolder url="file://$MODULE_DIR$/02_Completable_Future_Creation" isTestSource="false" packagePrefix="CompletableFutureExamples.CompletableFutureCreation" />
+      <sourceFolder url="file://$MODULE_DIR$/03_Thread_Usage_Example" isTestSource="false" packagePrefix="CompletableFutureExamples.ThreadUsageExample" />
+      <sourceFolder url="file://$MODULE_DIR$/04_Combination_Example" isTestSource="false" packagePrefix="CompletableFutureExamples.CombinationExample" />
+      <sourceFolder url="file://$MODULE_DIR$/05_Exception_Handling" isTestSource="false" packagePrefix="CompletableFutureExamples.ExceptionHandling" />
+      <sourceFolder url="file://$MODULE_DIR$/06_Timeout_Example" isTestSource="false" packagePrefix="CompletableFutureExamples.TimeoutExample" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

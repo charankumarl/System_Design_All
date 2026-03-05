@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/01_Example" isTestSource="false" packagePrefix="WildCards.Example" />
+      <sourceFolder url="file://$MODULE_DIR$/02_Wildcard_Types" isTestSource="false" packagePrefix="WildCards.Wildcard_Types" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
