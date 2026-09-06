@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redis Cluster — Nodes, Shards &amp; Replicas Explained</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2024; --muted:#5c6470; --line:#e3e6ea;
+    --accent:#c8322b; --accent-soft:#fdecea;
+    --blue:#2563eb; --blue-soft:#e8f0fe;
+    --green:#1a7f4b; --green-soft:#e6f5ec;
+    --amber:#a86400; --amber-soft:#fdf3e0;
+    --purple:#6b3fa0; --purple-soft:#f1eafa;
+    --code-bg:#12161b; --code-ink:#dfe6ee;
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14171a; --card:#1c2024; --ink:#e8eaed; --muted:#a0a8b3; --line:#2c3238;
+      --accent:#ff6b60; --accent-soft:#2a1c1b;
+      --blue:#7aa7ff; --blue-soft:#1a2130;
+      --green:#5fcf92; --green-soft:#152a20;
+      --amber:#e6b45c; --amber-soft:#2a2318;
+      --purple:#c4a3f0; --purple-soft:#241c33;
+      --code-bg:#0d1013; --code-ink:#dfe6ee;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+
+  header.hero{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 28px 24px;margin-bottom:26px;border-top:4px solid var(--accent);}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 8px}
+  h1{margin:0 0 10px;font-size:28px;line-height:1.25}
+  .sub{margin:0;color:var(--muted);font-size:15px}
+
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 22px;margin-bottom:26px;}
+  nav.toc h2{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  nav.toc ol{margin:0;padding-left:20px}
+  nav.toc li{margin:4px 0}
+  nav.toc a{color:var(--blue);text-decoration:none}
+  nav.toc a:hover{text-decoration:underline}
+
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px 26px;margin-bottom:22px;}
+  h2.sec{margin:0 0 4px;font-size:21px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 6px;
+    border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;flex:0 0 auto;}
+  h3{margin:22px 0 8px;font-size:16px}
+  p{margin:10px 0}
+
+  .oneline{margin:10px 0 4px;padding:12px 16px;border-left:3px solid var(--blue);
+    background:var(--blue-soft);border-radius:0 8px 8px 0;font-weight:600;}
+  .note{margin:14px 0;padding:12px 16px;border-left:3px solid var(--amber);
+    background:var(--amber-soft);border-radius:0 8px 8px 0;font-size:14.5px;}
+  .good{margin:14px 0;padding:12px 16px;border-left:3px solid var(--green);
+    background:var(--green-soft);border-radius:0 8px 8px 0;font-size:14.5px;}
+  .key{margin:14px 0;padding:14px 18px;border:2px solid var(--purple);
+    background:var(--purple-soft);border-radius:10px;font-size:15px;}
+  .key b{color:var(--purple)}
+
+  pre{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;
+    overflow-x:auto;font-size:13.5px;line-height:1.55;margin:12px 0;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+  p code,li code,td code{background:var(--blue-soft);color:var(--ink);padding:1px 6px;border-radius:5px}
+
+  .formula{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:22px 18px;
+    text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:17px;font-weight:700;line-height:1.7;margin:16px 0;overflow-x:auto;}
+  .formula .hl{color:#ffd479}
+
+  .tablewrap{overflow-x:auto;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:var(--blue-soft);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--bg) 55%, transparent)}
+  td.ok{color:var(--green);font-weight:700}
+  td.no{color:var(--accent);font-weight:700}
+
+  figure{margin:8px 0 0}
+  figure img{width:100%;border:1px solid var(--line);border-radius:10px;display:block;background:#fff}
+  figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+  .card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:color-mix(in srgb, var(--bg) 45%, transparent)}
+  .card .k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+  .card .v{font-size:22px;font-weight:700;margin-bottom:6px}
+  .card .d{font-size:13.5px;color:var(--muted)}
+
+  /* shard diagram */
+  .shardgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+  .shardbox{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .shardbox .head{background:var(--blue-soft);padding:8px 12px;font-weight:700;font-size:13.5px;border-bottom:1px solid var(--line)}
+  .shardbox .body{padding:10px 12px;font-size:13px;font-family:ui-monospace,Menlo,monospace;color:var(--muted);line-height:1.8}
+  .node{display:block}
+  .node .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:99px;margin-right:6px;vertical-align:1px}
+  .t-p{background:var(--accent-soft);color:var(--accent)}
+  .t-r{background:var(--green-soft);color:var(--green)}
+
+  .xref{font-size:14px;color:var(--muted);margin-top:6px}
+  .xref a{color:var(--blue)}
+  footer{color:var(--muted);font-size:13px;text-align:center;padding-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">AWS ElastiCache · Redis Cluster</p>
+  <h1>Nodes, Shards &amp; Replicas — Explained Simply</h1>
+  <p class="sub">What <code>shardCount</code> and <code>replicaCount</code> actually mean, how many nodes they produce, where your data lives, and what happens when a node dies.</p>
+</header>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#config">The config screen</a></li>
+    <li><a href="#shard">Shard = split the data</a></li>
+    <li><a href="#replica">Replica = copy of a shard</a></li>
+    <li><a href="#formula">The formula — total nodes</a></li>
+    <li><a href="#ours">Our cluster, drawn out</a></li>
+    <li><a href="#routing">How Redis picks a shard (hash slots)</a></li>
+    <li><a href="#failover">What happens when a node dies</a></li>
+    <li><a href="#who">Who serves reads vs writes</a></li>
+    <li><a href="#naming">Reading node names in the console</a></li>
+    <li><a href="#hotshard">Why this matters when debugging</a></li>
+    <li><a href="#scaling">Scaling — add shards or add replicas?</a></li>
+    <li><a href="#gotchas">Gotchas worth knowing</a></li>
+    <li><a href="#remember">Easy way to remember</a></li>
+  </ol>
+</nav>
+
+<section id="config">
+  <h2 class="sec"><span class="num">📸</span> The config screen</h2>
+  <figure>
+    <img src="img.png" alt="Infra ScaleUp screen showing shardCount 25 and replicaCount 2 for ni-offers-cache">
+    <figcaption>Infra ScaleUp → Mumbai (ap-south-1) → production → ElastiCache (Redis) → <code>ni-offers-cache</code>.</figcaption>
+  </figure>
+  <div class="cards">
+    <div class="card"><div class="k">shardCount</div><div class="v">25</div><div class="d">How many pieces the data is split into</div></div>
+    <div class="card"><div class="k">replicaCount</div><div class="v">2</div><div class="d">Copies kept <em>per shard</em>, on top of the primary</div></div>
+    <div class="card"><div class="k">Total nodes</div><div class="v">75</div><div class="d">25 × (2 + 1)</div></div>
+  </div>
+  <p>Only two numbers on that screen matter, and everything else in this page follows from them. The panel on the right of the screenshot says the same thing in AWS's words: a shard holds <em>a subset of the cluster's data</em> and consists of one <strong>Primary Node</strong> (handles writes) plus <strong>Replica Nodes</strong> (copies, for availability and read scaling).</p>
+</section>
+
+<section id="shard">
+  <h2 class="sec"><span class="num">1</span> Shard = split the data</h2>
+  <div class="oneline">✂️ "Cut the data into pieces so no single machine holds it all."</div>
+  <p>Imagine 1 million Redis keys. Instead of cramming all of them onto one server, Redis splits them across 25 shards:</p>
+<pre>Redis Cluster (ni-offers-cache)
+│
+├── Shard 1  → some keys
+├── Shard 2  → some keys
+├── Shard 3  → some keys
+│   ...
+└── Shard 25 → some keys</pre>
+  <p>Each key lives on exactly one shard:</p>
+<pre>customer:101  →  Shard 1
+customer:102  →  Shard 7
+customer:103  →  Shard 3
+customer:104  →  Shard 20</pre>
+  <p>So a read goes straight to the one shard that owns that key:</p>
+<pre>GET customer:101
+       ↓
+   Shard 1  (and nowhere else)</pre>
+
+  <div class="key"><b>Key point:</b> shards hold <b>different</b> data. Shard 1 and Shard 7 have nothing in common. There is no duplication between shards — that is the whole point.</div>
+
+  <h3>What sharding buys you</h3>
+  <ul>
+    <li><strong>More memory.</strong> 25 shards give you 25× the RAM of a single node. A dataset too big for one machine now fits.</li>
+    <li><strong>More CPU.</strong> Redis processes commands single-threaded per node, so 25 shards means 25 command loops running in parallel.</li>
+    <li><strong>More throughput.</strong> Traffic is spread instead of piling onto one box.</li>
+  </ul>
+  <p class="xref">→ Related: the single-threaded command loop is why <a href="../o1_Metrics_Info/index.html">Engine CPU Utilization</a> is the metric to watch for Redis slowness.</p>
+</section>
+
+<section id="replica">
+  <h2 class="sec"><span class="num">2</span> Replica = copy of a shard</h2>
+  <div class="oneline">📋 "Keep spare copies so losing a machine doesn't lose the data."</div>
+  <p><code>replicaCount = 2</code> means <strong>each shard</strong> keeps 2 extra copies alongside its primary:</p>
+<pre>Shard 1
+│
+├── Primary     ← the real one. All writes go here.
+├── Replica 1   ← continuously copies the primary
+└── Replica 2   ← continuously copies the primary</pre>
+  <p>The replicas are not idle spares sitting in a cupboard — they stream every change from the primary as it happens, so they stay a fraction of a second behind at all times.</p>
+
+  <div class="key"><b>Key point:</b> replicas of the same shard hold <b>identical</b> data. Replicas of <b>different</b> shards hold completely different data. So across the cluster: primaries differ from each other, replicas match their own primary.</div>
+
+  <h3>What replicas buy you</h3>
+  <ul>
+    <li><strong>High availability.</strong> Primary dies → a replica is promoted → the cluster keeps serving. No data lost (in practice, near-zero).</li>
+    <li><strong>Read scaling.</strong> Applications can be configured to read from replicas, spreading read traffic across 3 nodes per shard instead of 1.</li>
+    <li><strong>Zone resilience.</strong> AWS places replicas in different Availability Zones, so losing an entire AZ does not take out a shard.</li>
+  </ul>
+  <div class="note"><strong>Replicas do not add capacity.</strong> A copy of the same data is not extra room. 25 shards × 2 replicas does <em>not</em> mean you can store 3× more — you still store one dataset, just three times over. If you need more memory, add shards, not replicas.</div>
+</section>
+
+<section id="formula">
+  <h2 class="sec"><span class="num">3</span> The formula</h2>
+  <p>The number that trips everyone up. <code>replicaCount</code> means replicas <strong>in addition to</strong> the primary — the primary is not counted as one of them.</p>
+
+  <div class="formula">
+    Total nodes = shardCount × ( replicaCount <span class="hl">+ 1</span> )
+  </div>
+
+  <p>That <code>+1</code> is the primary. Applied to our cluster:</p>
+<pre>Each shard =  1 Primary
+           +  2 Replicas
+           =  3 nodes
+
+Total      = 25 shards × 3 nodes
+           = 75 nodes</pre>
+
+  <p>So it is <strong>not</strong> <code>25 × 2 = 50</code>. It is <code>25 × 3 = 75</code>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Shards</th><th>Replicas per shard</th><th>Nodes per shard</th><th>Total nodes</th><th>Survives a node loss?</th></tr></thead>
+    <tbody>
+      <tr><td>25</td><td>0</td><td>1</td><td>25</td><td class="no">No — that shard's data is gone</td></tr>
+      <tr><td>25</td><td>1</td><td>2</td><td>50</td><td class="ok">Yes — one spare</td></tr>
+      <tr><td>25</td><td>2</td><td>3</td><td><strong>75</strong></td><td class="ok">Yes — two spares <em>(our setup)</em></td></tr>
+      <tr><td>25</td><td>3</td><td>4</td><td>100</td><td class="ok">Yes — three spares</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note"><strong>If the console shows a different node count than the formula predicts,</strong> don't guess — check these in order: (1) are you looking at the same cluster in the same region and environment? (2) is a scale-up / resharding operation still in progress? (3) does the console page count only primaries, or nodes in a particular state? The formula itself is not the thing that is wrong — one of the two inputs, or the thing being counted, is different from what you assume.</div>
+</section>
+
+<section id="ours">
+  <h2 class="sec"><span class="num">4</span> Our cluster, drawn out</h2>
+  <p>25 shards × 3 nodes each. Here are the first four, and the last — the pattern repeats identically:</p>
+
+  <div class="shardgrid">
+    <div class="shardbox">
+      <div class="head">Shard 1</div>
+      <div class="body">
+        <span class="node"><span class="tag t-p">P</span>0001-001</span>
+        <span class="node"><span class="tag t-r">R</span>0001-002</span>
+        <span class="node"><span class="tag t-r">R</span>0001-003</span>
+      </div>
+    </div>
+    <div class="shardbox">
+      <div class="head">Shard 2</div>
+      <div class="body">
+        <span class="node"><span class="tag t-p">P</span>0002-001</span>
+        <span class="node"><span class="tag t-r">R</span>0002-002</span>
+        <span class="node"><span class="tag t-r">R</span>0002-003</span>
+      </div>
+    </div>
+    <div class="shardbox">
+      <div class="head">Shard 3</div>
+      <div class="body">
+        <span class="node"><span class="tag t-p">P</span>0003-001</span>
+        <span class="node"><span class="tag t-r">R</span>0003-002</span>
+        <span class="node"><span class="tag t-r">R</span>0003-003</span>
+      </div>
+    </div>
+    <div class="shardbox">
+      <div class="head">Shard 4</div>
+      <div class="body">
+        <span class="node"><span class="tag t-p">P</span>0004-001</span>
+        <span class="node"><span class="tag t-r">R</span>0004-002</span>
+        <span class="node"><span class="tag t-r">R</span>0004-003</span>
+      </div>
+    </div>
+    <div class="shardbox">
+      <div class="head">… Shard 25</div>
+      <div class="body">
+        <span class="node"><span class="tag t-p">P</span>0025-001</span>
+        <span class="node"><span class="tag t-r">R</span>0025-002</span>
+        <span class="node"><span class="tag t-r">R</span>0025-003</span>
+      </div>
+    </div>
+  </div>
+
+  <p><span class="tag t-p" style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;background:var(--accent-soft);color:var(--accent)">P</span> = Primary &nbsp;·&nbsp;
+     <span class="tag t-r" style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;background:var(--green-soft);color:var(--green)">R</span> = Replica</p>
+
+  <div class="good"><strong>Read it horizontally vs vertically.</strong> Going <em>across</em> shards (Shard 1 → Shard 2 → Shard 3): all different data. Going <em>down</em> within a shard (Primary → Replica 1 → Replica 2): the same data three times.</div>
+</section>
+
+<section id="routing">
+  <h2 class="sec"><span class="num">5</span> How Redis picks a shard</h2>
+  <div class="oneline">🎰 "The key name decides. Every client computes the same answer."</div>
+  <p>There is no lookup table and no coordinator asking "where is this key?". Redis Cluster divides the keyspace into a fixed <strong>16,384 hash slots</strong>, and every shard owns a range of them.</p>
+<pre>slot = CRC16(key) mod 16384
+
+customer:101  →  CRC16 → slot   866   → owned by Shard 2
+customer:102  →  CRC16 → slot 15298   → owned by Shard 24</pre>
+  <p>With 25 shards, each owns roughly <code>16384 / 25 ≈ 655</code> slots:</p>
+<pre>Shard 1  → slots     0 –   655
+Shard 2  → slots   656 –  1310
+Shard 3  → slots  1311 –  1965
+   ...
+Shard 25 → slots 15729 – 16383</pre>
+  <p>The client library caches this slot→node map, so it connects <strong>directly</strong> to the right node. No extra hop, no proxy.</p>
+  <div class="note"><strong>Is 16,384 a standard number?</strong> Yes — it is hardcoded into Redis (<code>CLUSTER_SLOTS</code>) and is part of the Redis Cluster spec. It is not an AWS setting and not tunable. Every Redis Cluster in the world uses 16,384 slots.
+  <br><br><strong>Why that number?</strong> Cluster nodes gossip constantly, and every heartbeat message carries a bitmap of the slots that node owns. 16,384 bits is 2&nbsp;KB per message; 65,536 bits would be 8&nbsp;KB — too heavy for something sent that often. Redis clusters realistically stay under ~1,000 nodes, so 16,384 slots gives more than enough granularity at that scale while keeping gossip cheap.</div>
+
+  <h3>Why fixed slots instead of hashing straight to shard numbers?</h3>
+  <p>Because the shard count changes. Compare what happens when we grow from 25 shards to 26:</p>
+<pre>Option A — hash directly to a shard number
+  slot = CRC16(key) mod 25   →   CRC16(key) mod 26
+  The answer changes for ~96% of keys.
+  Almost the entire dataset has to move.
+
+Option B — fixed 16384 slots (what Redis does)
+  25 shards → 16384 / 25 = 655 slots each
+  26 shards → 16384 / 26 = 630 slots each
+
+  The new shard needs ~630 slots.
+  Each existing shard hands over ~25 of its slots.
+  Only 630 / 16384 ≈ 3.8% of keys move. The rest never budge.</pre>
+  <p class="xref">The 655 and 630 above are just <code>16384 ÷ shardCount</code> — arithmetic for this cluster, not fixed Redis values. Only 16,384 itself is a constant.</p>
+
+  <h3>So how it works, step by step</h3>
+<pre>1. CRC16 turns the key name into a number.
+      CRC16("customer:101") = 49554
+   Same key always gives the same number, on every machine.
+
+2. mod 16384 squeezes it into 0 – 16383. That is the SLOT.
+      49554 mod 16384 = slot 866
+
+3. That slot already belongs to a shard — assigned when the
+   cluster was built, long before your key existed.
+      slot 866 falls in range 656 – 1310  →  Shard 2
+
+4. The client already has the slot→node map cached, so it
+   connects straight to that node. No proxy, no lookup call.
+      → ni-offers-cache-0002-001</pre>
+
+  <h3>Write once, read from the same place</h3>
+  <p>Once the slot is worked out, that decides the shard — and the data is stored there. At read time the exact same calculation runs again, gives the exact same slot, and the client goes straight to that shard.</p>
+<pre>WRITE
+  SET customer:101 "offer123"
+      CRC16 → mod 16384 → slot 866 → Shard 2
+      → value stored on Shard 2
+
+READ  (later, from any app server)
+  GET customer:101
+      CRC16 → mod 16384 → slot 866 → Shard 2
+      → goes directly to Shard 2, finds it there</pre>
+  <p>Same key → same slot → same shard, every single time. That is why no lookup is ever needed: the write and the read both compute their way to the same node on their own.</p>
+</section>
+
+<section id="failover">
+  <h2 class="sec"><span class="num">6</span> What happens when a node dies</h2>
+  <p>This is the payoff for having replicas. Say the primary of Shard 1 fails:</p>
+<pre>Before
+  Shard 1 → Primary 0001-001 ✅ | Replica 0001-002 | Replica 0001-003
+
+Primary crashes
+  Shard 1 → Primary 0001-001 ❌ | Replica 0001-002 | Replica 0001-003
+
+Automatic failover (seconds)
+  Shard 1 → Primary 0001-002 ✅ | Replica 0001-003
+                                 (0001-001 rebuilt, rejoins as a replica)</pre>
+  <ul>
+    <li>Only <strong>Shard 1</strong> is affected. The other 24 shards never notice.</li>
+    <li>Clients get a brief error window, then refresh their slot map and carry on.</li>
+    <li>Once AWS replaces the dead node, it comes back as a replica and you are at 3 nodes again.</li>
+  </ul>
+  <div class="good"><strong>With <code>replicaCount = 2</code> you can lose two nodes in the same shard and still be serving.</strong> That is what the second replica is really buying — cover during the window while the first failure is being repaired.</div>
+  <div class="note"><strong>What if a shard loses <em>all</em> its nodes?</strong> That shard's slots become unavailable. Depending on cluster settings, the whole cluster may reject requests for those slots. This is why <code>replicaCount = 0</code> in production is a bad idea — one node loss means permanent data loss for 1/25th of your keyspace.</div>
+</section>
+
+<section id="who">
+  <h2 class="sec"><span class="num">7</span> Who serves reads vs writes</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th></th><th>Primary</th><th>Replica</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Writes</strong> (<code>SET</code>, <code>DEL</code>, <code>INCR</code>)</td><td class="ok">Yes — always</td><td class="no">Never</td></tr>
+      <tr><td><strong>Reads</strong> (<code>GET</code>)</td><td class="ok">Yes</td><td>Only if the client opts in</td></tr>
+      <tr><td><strong>Data freshness</strong></td><td>Always current</td><td>Milliseconds behind</td></tr>
+      <tr><td><strong>Count per shard here</strong></td><td>1</td><td>2</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>By default every request — read and write — goes to the primary, and replicas sit there purely as insurance. Clients can opt into replica reads (Redis calls this <code>READONLY</code> mode; most libraries expose it as a "read from replica" setting).</p>
+  <div class="note"><strong>The trade-off with replica reads:</strong> replication is asynchronous. Write a value and immediately read it from a replica, and you may get the old one. Fine for cached product data or offers; not fine for "did my write succeed?" checks. When in doubt, read from the primary.</div>
+</section>
+
+<section id="naming">
+  <h2 class="sec"><span class="num">8</span> Reading node names in the console</h2>
+  <p>ElastiCache node names encode exactly where the node sits:</p>
+<pre>ni-offers-cache-0001-001
+└──────┬──────┘ └─┬┘ └┬┘
+   cache name   shard node
+                 01   01</pre>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Node name</th><th>Means</th></tr></thead>
+    <tbody>
+      <tr><td><code>ni-offers-cache-0001-001</code></td><td>Shard 1, node 1</td></tr>
+      <tr><td><code>ni-offers-cache-0001-002</code></td><td>Shard 1, node 2 — same data as above</td></tr>
+      <tr><td><code>ni-offers-cache-0005-002</code></td><td>Shard 5, node 2 — completely different data</td></tr>
+      <tr><td><code>ni-offers-cache-0025-003</code></td><td>Shard 25, node 3</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><strong>The <code>-001</code> node is not permanently the primary.</strong> It usually starts out as one, but after any failover the roles move. Always check the console's Role column rather than assuming from the number.</div>
+</section>
+
+<section id="hotshard">
+  <h2 class="sec"><span class="num">9</span> Why this matters when debugging</h2>
+  <p>This is the practical reason to understand shards at all. When CPU is high on a Redis cluster, the first question is <strong>one node or many?</strong></p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Pattern</th><th>What it means</th><th>What to do</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>All 25 shards busy, evenly</strong></td>
+        <td>Genuine load. The cluster is doing real work at its current size.</td>
+        <td>Scale up — add shards.</td>
+      </tr>
+      <tr>
+        <td><strong>One shard hot, 24 quiet</strong></td>
+        <td><strong>Hot shard.</strong> One shard is getting a wildly disproportionate share of traffic.</td>
+        <td>Find the hot key. Adding shards will <em>not</em> help — the key still lands on one shard.</td>
+      </tr>
+      <tr>
+        <td><strong>One node hot within a shard</strong></td>
+        <td>That node is the primary taking all traffic while replicas idle.</td>
+        <td>Normal, unless you expected replica reads to be on.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>What causes a hot shard</h3>
+  <ul>
+    <li><strong>One very popular key.</strong> A global config or feature-flag blob read on every single request. It hashes to one slot, so it lives on one shard forever.</li>
+    <li><strong>Poor key distribution.</strong> Keys built from a low-cardinality value (e.g. city name) pile onto a handful of slots.</li>
+    <li><strong>Overused hash tags.</strong> See the gotcha below.</li>
+  </ul>
+  <p class="xref">→ Related: check <a href="../o1_Metrics_Info/index.html">Engine CPU Utilization per node</a> to spot this. Select all nodes in the CloudWatch panel instead of one — an outlier line is your hot shard.</p>
+</section>
+
+<section id="scaling">
+  <h2 class="sec"><span class="num">10</span> Scaling — shards or replicas?</h2>
+  <p>They solve different problems. Picking the wrong one wastes money and fixes nothing.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Your problem</th><th>Increase</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Running out of memory</td><td><strong>shardCount</strong></td><td>More shards = more total RAM. Replicas add zero capacity.</td></tr>
+      <tr><td>Engine CPU high across all nodes</td><td><strong>shardCount</strong></td><td>More shards = more parallel command loops.</td></tr>
+      <tr><td>Want to survive more node failures</td><td><strong>replicaCount</strong></td><td>More spares per shard.</td></tr>
+      <tr><td>Read traffic heavy, writes light</td><td><strong>replicaCount</strong> + replica reads</td><td>Spreads reads across more nodes in the same shard.</td></tr>
+      <tr><td>One shard hot, rest idle</td><td><strong>Neither</strong></td><td>Fix the key design. More infrastructure will not move a hot key off its shard.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><strong>Adding shards is not free.</strong> Changing <code>shardCount</code> triggers a <em>resharding</em> — hash slots and their keys migrate between nodes while the cluster is live. It works online, but it consumes CPU and network for the duration. Do it in a low-traffic window, not during an incident.</div>
+  <div class="good"><strong>Adding replicas is much cheaper operationally.</strong> A new replica just syncs from its primary. No slot migration, no keyspace disruption.</div>
+</section>
+
+<section id="gotchas">
+  <h2 class="sec"><span class="num">11</span> Gotchas worth knowing</h2>
+
+  <h3>Multi-key commands can fail</h3>
+  <p>In a clustered Redis, a command touching several keys only works if all those keys live on the <strong>same</strong> shard. Otherwise:</p>
+<pre>MGET customer:101 customer:102
+→ (error) CROSSSLOT Keys in request don't hash to the same slot</pre>
+  <p>The two keys hash to different shards, and no single node can answer. Same applies to <code>MSET</code>, <code>SUNION</code>, transactions spanning keys, and Lua scripts touching multiple keys.</p>
+
+  <h3>Hash tags — forcing keys onto the same shard</h3>
+  <p>Wrap part of the key in <code>{ }</code> and Redis hashes <em>only</em> that part:</p>
+<pre>{customer:101}:profile   ┐
+{customer:101}:orders    ├─ all hash on "customer:101"
+{customer:101}:cart      ┘  → same slot → same shard
+
+MGET {customer:101}:profile {customer:101}:orders   ✅ works</pre>
+  <div class="note"><strong>Use hash tags sparingly.</strong> They are the fastest way to create a hot shard. If you tag by something coarse like <code>{india}</code>, every key in the country lands on one shard and your other 24 sit idle. Tag by something with high cardinality — a customer id, an order id — never a region or a constant.</div>
+
+  <h3>Big keys are worse in a cluster</h3>
+  <p>A single 500 MB key cannot be split. It sits entirely on one shard, skewing memory and CPU for that shard alone. Split large structures across multiple keys instead.</p>
+
+  <h3>Replica lag is real</h3>
+  <p>Under heavy writes, replicas fall further behind. If you read from replicas, that lag becomes visible staleness. Monitor <code>ReplicationLag</code> if replica reads are enabled.</p>
+</section>
+
+<section id="remember">
+  <h2 class="sec"><span class="num">12</span> Easy way to remember</h2>
+
+  <h3>The library analogy</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Redis</th><th>Library</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Shard</strong></td><td>A different section of the library — History, Science, Fiction</td><td>Scale — no single room holds every book</td></tr>
+      <tr><td><strong>Replica</strong></td><td>A photocopy of a whole section kept in another building</td><td>Safety — a fire in one building loses nothing</td></tr>
+      <tr><td><strong>Hash slot</strong></td><td>The catalogue rule that says which section a book belongs to</td><td>Routing — everyone computes the same answer</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+<pre>SHARD
+ ↓
+"Split the data"  → more space, more speed
+
+REPLICA
+ ↓
+"Copy the data"   → survives failure, spreads reads
+
+              ┌── Primary     (writes + reads)
+Shard ────────┼── Replica 1   (copy)
+              └── Replica 2   (copy)
+
+Nodes per shard  = 1 + replicaCount
+Total nodes      = shardCount × (1 + replicaCount)</pre>
+
+  <div class="formula">
+    25 × ( 2 + 1 ) = <span class="hl">75 nodes</span>
+  </div>
+
+  <div class="key">
+    <b>The three sentences that cover 90% of it:</b><br>
+    1. Different shards hold different data — that is scale.<br>
+    2. Replicas of one shard hold identical data — that is safety.<br>
+    3. Total nodes = shards × (replicas + 1) — the +1 is the primary.
+  </div>
+</section>
+
+<footer>Redis Cluster concepts · example config: <code>ni-offers-cache</code>, ap-south-1, production · 25 shards × 2 replicas = 75 nodes</footer>
+</div>
+</body>
+</html>

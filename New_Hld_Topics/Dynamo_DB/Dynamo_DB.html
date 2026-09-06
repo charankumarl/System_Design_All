@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DynamoDB Deep Dive</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #cdeeff 0%, #e8f7ff 100%);
+  color: #1c2b36;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #0a5f8c;
+}
+
+h2.step {
+  font-size: 21px;
+  margin: 28px 0 14px;
+  color: #ffffff;
+  background: rgba(30, 144, 255, 0.55);
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 8px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 14px;
+  color: #0a5f8c;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #1e90ff;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+h4 {
+  font-size: 14px;
+  margin: 16px 0 8px;
+  color: #2c6e91;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(30, 144, 255, 0.25);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(30, 144, 255, 0.08);
+}
+
+ul { margin: 8px 0; padding-left: 22px; }
+li { margin-bottom: 6px; }
+.timeline li ul { margin-top: 6px; }
+
+.divider {
+  border: none;
+  border-top: 1px solid rgba(30, 144, 255, 0.3);
+  margin: 20px 0;
+}
+
+p.note {
+  background: rgba(135, 206, 250, 0.25);
+  border-left: 3px solid #1e90ff;
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-top: 14px;
+  font-size: 14px;
+  color: #234;
+}
+
+pre {
+  background: rgba(10, 40, 60, 0.85);
+  border: 1px solid rgba(30, 144, 255, 0.3);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 13px;
+  overflow-x: auto;
+  color: #8ee3ff;
+  white-space: pre-wrap;
+}
+
+code {
+  background: rgba(10, 40, 60, 0.85);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #8ee3ff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(30, 144, 255, 0.2);
+  vertical-align: top;
+}
+
+th {
+  color: #0a5f8c;
+  font-weight: 600;
+  background: rgba(135, 206, 250, 0.3);
+}
+
+tbody tr:hover { background: rgba(135, 206, 250, 0.2); }
+
+.ref {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.ref img {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(30, 144, 255, 0.3);
+  display: block;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <h1>DynamoDB Deep Dive</h1>
+
+  <section class="card ref">
+    <img src="images/img2.png" alt="DynamoDB provisioned capacity screenshot">
+  </section>
+
+  <h2 class="step">Step 1 &rarr; RCU and WCU</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> What is RCU and WCU</h3>
+    <ul>
+      <li><b>RCU (Read Capacity Unit)</b> — 1 RCU = 1 strongly consistent read/sec for an item up to 4KB.</li>
+      <li><b>WCU (Write Capacity Unit)</b> — 1 WCU = 1 write/sec for an item up to 1KB.</li>
+    </ul>
+    <p class="note">Think of RCU/WCU as a <b>speed limit dial</b>, not a bucket of requests. You pay for how fast you can read/write per second — not how much data you store.</p>
+
+    <h4>What "item size" means</h4>
+    <p>Size of the actual item (row) — sum of all attributes (partition key, sort key, every column) — in bytes as stored, not as it looks in JSON.</p>
+
+    <h4>Formula</h4>
+    <pre>RCU needed = ceil(item_size_in_KB / 4)   [strongly consistent read]
+WCU needed = ceil(item_size_in_KB / 1)</pre>
+
+    <table>
+      <thead><tr><th>Item size</th><th>Read (strong)</th><th>Read (eventual)</th><th>Write</th></tr></thead>
+      <tbody>
+        <tr><td>2 KB</td><td>1 RCU</td><td>1 RCU (2KB fits in 4KB → still 1)</td><td>2 WCU</td></tr>
+        <tr><td>4 KB</td><td>1 RCU</td><td>1 RCU</td><td>4 WCU</td></tr>
+        <tr><td>4.1 KB</td><td>2 RCU (rounds up)</td><td>1 RCU</td><td>5 WCU</td></tr>
+        <tr><td>10 KB</td><td>3 RCU</td><td>2 RCU</td><td>10 WCU</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Bigger item → more units needed. It always <b>rounds up</b> to the next whole unit.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> Real time — per second, every second</h3>
+    <p>Provisioned capacity is <b>not a daily quota</b>. It's a ceiling checked fresh every single second.</p>
+    <ul class="timeline">
+      <li><b>Second 1:</b> 40 reads of 4KB items → consumed 40/50 RCU. Fine.</li>
+      <li><b>Second 2:</b> 60 reads → consumed 60/50 RCU → extra 10 either:
+        <ul>
+          <li>burn <b>burst capacity</b> (unused RCU saved from last 5 min, like a rolling credit), or</li>
+          <li>get <b>throttled</b> → fails with <code>ProvisionedThroughputExceededException</code>, client must retry.</li>
+        </ul>
+      </li>
+      <li><b>Second 3:</b> back to 30 reads → consumed 30/50. Fine again.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> Strongly consistent vs Eventually consistent</h3>
+    <ul>
+      <li><b>Strongly consistent</b> — you always get the <b>latest</b> written value. Full price: 1 RCU per 4KB.</li>
+      <li><b>Eventually consistent</b> — you might get slightly <b>stale</b> data (replica hasn't caught up yet, usually within ~1 sec). Half price: 0.5 RCU per 4KB.</li>
+    </ul>
+    <table>
+      <thead><tr><th>Read type</th><th>Cost per 4KB chunk</th></tr></thead>
+      <tbody>
+        <tr><td>Strongly consistent</td><td>1 RCU</td></tr>
+        <tr><td>Eventually consistent</td><td>0.5 RCU (2 reads for 1 RCU)</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Set per request via <code>ConsistentRead: true/false</code> in the API call — not a table setting. Default is <b>false</b> (eventual).<br>
+    <b>GSI reads are always eventually consistent</b> — <code>ConsistentRead: true</code> is not allowed on a GSI.</p>
+
+    <h4>Same table, same query — what's actually different</h4>
+    <p>DynamoDB keeps each item copied across multiple replicas (different AZs). A write lands on a majority first, then syncs to the rest — that sync isn't instant.</p>
+    <ul>
+      <li><b>Strong read</b> → always routed to the replica with the latest write. Guaranteed fresh, every time.</li>
+      <li><b>Eventual read</b> → routed to <i>any</i> replica, might be one that hasn't synced yet. Usually catches up within ~1 sec (often ms), but not guaranteed on that exact read.</li>
+    </ul>
+    <pre>T=0ms   Write: user.status = "active"
+T=5ms   Strong read   → "active"              ✅ always correct
+T=5ms   Eventual read → could be old value    ⚠️ replica may not have synced yet
+T=50ms  Eventual read → "active"               ✅ caught up by now</pre>
+    <p>Rule of thumb: use <b>strong</b> for write-then-read-your-own-write flows (e.g. user updates profile, reloads immediately). Use <b>eventual</b> for dashboards/analytics/background jobs — cheaper, faster, staleness doesn't matter.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">4</span> Throttling — example scenario</h3>
+    <p><b>Setup:</b> Provisioned RCU = 30. You send <b>50 strongly consistent reads</b> (1 RCU each, ≤4KB items) in the same second.</p>
+    <ol>
+      <li>First <b>30 requests</b> → allowed, consume the full 30 RCU. ✅</li>
+      <li>Remaining <b>20 requests</b> → exceed the ceiling. DynamoDB checks for <b>burst capacity</b> (unused RCU banked from the last ~5 min, if you weren't using the full 30 RCU/sec consistently):
+        <ul>
+          <li><b>Burst available</b> → covers the 20, they succeed too. ✅</li>
+          <li><b>Burst exhausted</b> (e.g. you've been running near 30 RCU steadily) → the 20 requests are <b>throttled</b>, fail instantly with <code>ProvisionedThroughputExceededException</code>. ❌</li>
+        </ul>
+      </li>
+    </ol>
+    <h4>What happens next</h4>
+    <ul>
+      <li>Throttling is an instant rejection, not a queue.</li>
+      <li>AWS SDK <b>auto-retries with exponential backoff</b> by default — often invisible to your app.</li>
+      <li>If retries also exhaust → exception bubbles up to your code, must be handled explicitly.</li>
+      <li>If <b>auto scaling</b> is on: it reacts to sustained overload via a CloudWatch alarm, but takes <b>~1-2 minutes</b> to raise capacity — so the <i>first</i> burst still throttles; only sustained load gets fixed automatically.</li>
+    </ul>
+    <p class="note">Provisioned capacity is a hard per-second ceiling. Exceeding it either eats banked burst capacity or throttles the excess — auto scaling helps with sustained load, not instant spikes.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">5</span> Same applies for writes (WCU)</h3>
+    <p>Identical mechanics as reads — just no strong/eventual split (writes are always full price, no "eventual write").</p>
+    <p><b>Setup:</b> Provisioned WCU = 30. You send <b>50 writes</b> (1 WCU each, ≤1KB items) in the same second.</p>
+    <ol>
+      <li>First <b>30 writes</b> → succeed, consume full 30 WCU. ✅</li>
+      <li>Remaining <b>20 writes</b> → check burst capacity:
+        <ul>
+          <li>Burst available → covered, succeed. ✅</li>
+          <li>Burst exhausted → throttled → <code>ProvisionedThroughputExceededException</code>. ❌</li>
+        </ul>
+      </li>
+      <li>SDK auto-retries with backoff. Auto scaling reacts in ~1-2 min for sustained load, not the instant spike.</li>
+    </ol>
+    <h4>Write-specific notes</h4>
+    <ul>
+      <li><b>Transactional writes cost 2x WCU</b> (same as transactional reads cost 2x RCU) — extra coordination for all-or-nothing across multiple items.</li>
+      <li><b>BatchWriteItem / BatchGetItem</b> consume RCU/WCU summed across all items in the batch. If an individual item gets throttled, it comes back in <code>UnprocessedItems</code> for retry — the whole batch doesn't fail.</li>
+    </ul>
+
+  </section>
+
+  <h2 class="step">Step 2 &rarr; What is Provisioned range means?</h2>
+  <section class="card">
+    <p>Refers to the screenshot's <b>"Provisioned range for reads: 500 – 10,000"</b> and <b>"Provisioned range for writes: 30 – 2,000"</b>.</p>
+    <p>These are the <b>min/max boundaries for auto-scaling</b> — the floor and ceiling within which DynamoDB is allowed to move provisioned RCU/WCU automatically.</p>
+    <ul>
+      <li><b>Min (e.g. 500 for reads)</b> → DynamoDB never scales <i>down</i> below this, even at near-zero traffic. You always pay for at least this much.</li>
+      <li><b>Max (e.g. 10,000 for reads)</b> → DynamoDB never scales <i>up</i> beyond this, no matter how much traffic spikes. This is your <b>cost safety cap</b>.</li>
+    </ul>
+    <h4>How it connects to the auto-scaling target (50% in the screenshot)</h4>
+    <ul>
+      <li>Auto-scaling watches actual consumed RCU.</li>
+      <li>Consumption climbs above target % → raises provisioned RCU, capped at max.</li>
+      <li>Consumption drops below target % → lowers provisioned RCU, floored at min.</li>
+    </ul>
+    <pre>Current provisioned: 500 RCU (min)
+Traffic spikes → consumed RCU regularly ~350 (70% of 500, above 50% target)
+Auto-scaling raises provisioned RCU → say to 700
+Traffic keeps growing → keeps raising... but stops hard at 10,000 (max)</pre>
+    <h4>Why a range instead of a fixed number</h4>
+    <ul>
+      <li>Max protects against <b>runaway cost</b> (bug/spike doesn't silently balloon the bill).</li>
+      <li>Min protects against <b>under-provisioning at idle</b> (baseline capacity so sudden traffic isn't throttled while scaling catches up).</li>
+    </ul>
+    <p class="note">If real traffic needs more than the max, it gets throttled like any other capacity-exceeded case — the range doesn't auto-expand, the max must be raised manually.</p>
+    <h4>Auto-scaling isn't instant</h4>
+    <ul>
+      <li>CloudWatch needs a <b>sustained breach</b> (~1-2 min of consecutive data points above target) before it fires the scale-up alarm. Then scaling takes effect — the whole loop is usually <b>1–3 minutes</b>, not seconds.</li>
+      <li>✅ <b>Gradual/sustained traffic growth</b> → auto-scaling reacts well before hitting the max ceiling, since target (50%) leaves headroom below 100%.</li>
+      <li>❌ <b>Sudden spikes</b> (e.g. load jumping in the same second) → auto-scaling does <b>not</b> react fast enough; that immediate burst still throttles. Scaling only helps once load persists long enough for CloudWatch to notice.</li>
+    </ul>
+    <p class="note">Target tracking auto-scaling protects against <b>sustained load growth</b>, not <b>instant spikes</b>.</p>
+  </section>
+
+  <h2 class="step">Step 3 &rarr; What is Target Read/Write Capacity Utilization</h2>
+  <section class="card">
+    <p>The 50% (reads) / 60% (writes) value from the screenshot — the trigger threshold auto-scaling uses to decide when to scale up or down.</p>
+    <pre>Utilization % = (consumed RCU / provisioned RCU) × 100</pre>
+    <p>With provisioned = 500 and target = 50%:</p>
+    <ul>
+      <li>Auto-scaling tries to keep consumed RCU hovering around <b>250</b> (50% of 500).</li>
+      <li>Consumed RCU rises above 250, sustained → scale <b>up</b> provisioned RCU.</li>
+      <li>Consumed RCU drops below 250, sustained → scale <b>down</b> provisioned RCU (saves cost).</li>
+    </ul>
+    <h4>Why not target 100%?</h4>
+    <ul>
+      <li>Target = 100% → zero buffer, any tiny spike instantly throttles (no room, no reaction time).</li>
+      <li>Lower target (e.g. 50%) → more headroom, safer, but pay for unused capacity more often.</li>
+      <li>Higher target (e.g. 80–90%) → less waste, but riskier — less buffer while scaling reacts.</li>
+    </ul>
+    <p class="note">Target % is a <b>cost vs safety-margin dial</b>. Low target = expensive but spike-safe. High target = cheap but riskier. AWS's suggested default is <b>70%</b>; this table uses 50% (reads, conservative) and 60% (writes).</p>
+  </section>
+
+  <h2 class="step">Step 4 &rarr; What is GSI and why we need it</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> What is GSI</h3>
+    <ul>
+      <li><b>GSI = Global Secondary Index.</b></li>
+      <li>An alternate way to query your table using a <b>different key</b>, without changing the original table.</li>
+      <li>You can only efficiently query by the base table's partition/sort key — anything else needs a <code>Scan</code> (slow, reads every item). A GSI fixes that.</li>
+    </ul>
+    <p><b>Example:</b> table <code>Orders</code>, PK = <code>orderId</code>.</p>
+    <ul>
+      <li>"Get order by orderId" ✅ fast (base table).</li>
+      <li>"Get all orders by userId" ❌ needs full scan — unless you add a GSI with PK = <code>userId</code>. Then it's fast too.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> How you create one</h3>
+    <ul>
+      <li><b>You pick the index name</b> (e.g. <code>userId-index</code>, <code>gsiIndex</code>) — your choice.</li>
+      <li><b>You pick the GSI partition key</b> (e.g. <code>userId</code>), optionally a sort key too (e.g. <code>createdAt</code>).</li>
+      <li>It's <b>not a separate table</b> — just an index attached to the same table. Query it via <code>TableName</code> + <code>IndexName</code>.</li>
+      <li><b>You pick the projection</b> — which columns get copied into the GSI (<code>ALL</code>, <code>KEYS_ONLY</code>, or a subset) — saves storage if you don't need every column there.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> Index capacity is separate</h3>
+    <ul>
+      <li>Each GSI has its <b>own RCU/WCU pool</b>, independent of the base table's capacity.</li>
+      <li>Think of a GSI as its own mini-table, auto-synced by DynamoDB, so it needs its own throughput.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">4</span> Writes cascade into GSIs</h3>
+    <ul>
+      <li>Writing an item to the base table <b>also writes to every GSI</b> whose key attributes that item touches.</li>
+      <li>That GSI write consumes <b>the GSI's own WCU</b>, not the base table's.</li>
+      <li><b>Gotcha:</b> if a GSI's WCU is too low, base table writes can get throttled — even if the base table itself has plenty of capacity.</li>
+    </ul>
+
+  </section>
+
+  <h2 class="step">Step 5 &rarr; Provisioned unit vs Consumed unit (Monitor graph)</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> What each line means</h3>
+    <ul>
+      <li><b>Provisioned</b> — the capacity ceiling right now. Staircase-shaped — flat, jumps only when auto-scaling changes it.</li>
+      <li><b>Consumed</b> — actual RCU/WCU your traffic used. Jagged — moves with real request volume.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> How to read it</h3>
+    <pre>RCU
+ │
+50├─── Provisioned (flat line — your ceiling)
+ │        ╭╮        ╭─╮
+30├───   ╱  ╲  ╱╲  ╱   ╲     ← Consumed (jagged — actual usage)
+ │      ╱    ╲╱  ╲╱
+ 0└──────────────────────────→ time</pre>
+    <ul>
+      <li>Consumed line stays below Provisioned line → healthy, no throttling.</li>
+      <li>Consumed line touches/crosses Provisioned line → <b>throttling</b> (often shown as a <code>ThrottledRequests</code> spike exactly there).</li>
+      <li>Consumed way below Provisioned → over-provisioned, wasting money.</li>
+      <li>Consumed keeps spiking near Provisioned → under-provisioned, raise capacity/target or check for a hot partition.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> Example — Provisioned = 500, Target = 50%</h3>
+    <pre>Consumed ≤ 250       → Provisioned line stays flat at 500
+Consumed > 250 (sustained ~1-2 min) → Provisioned steps up (e.g. 500 → 700)
+                        → new trigger becomes 50% of 700 = 350
+Consumed drops        → scales back down, never below min</pre>
+    <pre>RCU
+ 700├────────────────────╭──────  ← Provisioned steps up
+    │                    │
+ 500├───────╮  ╭╮        │
+    │        ╲╱  ╲   ╭───╯
+ 250│ - - - - - - -╲-╱- - - - -  ← trigger line (50% of current provisioned)
+    │   consumed
+   0└──────────────────────────→ time</pre>
+    <p class="note">Trigger point isn't fixed — it's always "target % of <i>current</i> Provisioned," so it moves up each time Provisioned steps up.</p>
+
+  </section>
+
+  <h2 class="step">Deep Understand — What all need to cover</h2>
+  <section class="card">
+    <h4>✅ Covered so far (capacity/throughput mechanics)</h4>
+    <ul>
+      <li>RCU/WCU, item size, per-second throttling behavior</li>
+      <li>Provisioned mode, auto-scaling (range, target %, staircase behavior)</li>
+      <li>Strong vs eventual consistency</li>
+      <li>GSI basics, GSI's own capacity pool, write cascade</li>
+      <li>Provisioned vs Consumed (Monitor graph)</li>
+    </ul>
+    <h4>❌ Still to cover</h4>
+    <table>
+      <thead><tr><th>Topic</th><th>Why it matters in interviews</th></tr></thead>
+      <tbody>
+        <tr><td><b>Partition key design &amp; hot partitions</b></td><td>THE most-asked DDB interview topic. How partitioning works internally, why bad key choice kills throughput even with high provisioned capacity.</td></tr>
+        <tr><td><b>On-Demand vs Provisioned</b></td><td>Trade-offs, when to pick which.</td></tr>
+        <tr><td><b>Single-table design</b></td><td>Signature DynamoDB interview topic — modeling multiple entity types in one table, adjacency list pattern, overloaded GSIs.</td></tr>
+        <tr><td><b>LSI vs GSI</b></td><td>Deeper comparison — creation-time-only, shared capacity, strong consistency support.</td></tr>
+        <tr><td><b>DynamoDB Streams</b></td><td>Change data capture, used with Lambda for event-driven architectures.</td></tr>
+        <tr><td><b>Transactions</b></td><td>ACID across items, 2x cost, when to use vs conditional writes.</td></tr>
+        <tr><td><b>Conditional writes / optimistic locking</b></td><td>Handling concurrent updates without transactions.</td></tr>
+        <tr><td><b>Global Tables</b></td><td>Multi-region replication — multi-region design questions.</td></tr>
+        <tr><td><b>TTL, backups (PITR), DAX</b></td><td>Common follow-up/curveball topics.</td></tr>
+        <tr><td><b>Query vs Scan, pagination, filter expressions</b></td><td>Efficient access pattern fundamentals.</td></tr>
+        <tr><td><b>Partition limits</b> — 3000 RCU / 1000 WCU / 10GB per partition</td><td>Ties back to hot partitions — the "aha" depth interviewers look for.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <h2 class="step">Throttling</h2>
+  <section class="card">
+
+    <p><b>When throttling happens:</b> whenever requests in a given second exceed available capacity (provisioned ceiling + any banked burst) — can happen even if the <b>table-level</b> average looks fine, because DynamoDB enforces limits <b>per partition</b>, not just per table.</p>
+    <p><b>Impact:</b> throttled requests fail immediately with <code>ProvisionedThroughputExceededException</code> — no data read/written for that request. Unhandled, this shows up as increased latency (SDK retries/backoff), degraded UX, or outright errors once retries exhaust. Often the root cause of "mysterious" perf issues — table looks fine in aggregate, but one hot key is getting hammered.</p>
+
+    <h4>What happens to the request when throttled</h4>
+    <table>
+      <thead><tr><th>API type</th><th>On throttle</th></tr></thead>
+      <tbody>
+        <tr><td>Single-item (GetItem, PutItem, Query, UpdateItem, DeleteItem)</td><td>Exception thrown (<code>ProvisionedThroughputExceededException</code>) → SDK auto-retries with exponential backoff by default</td></tr>
+        <tr><td>Batch (BatchGetItem, BatchWriteItem)</td><td>No exception for the whole batch — throttled items returned as <code>UnprocessedItems</code> (write) / <code>UnprocessedKeys</code> (read) → caller must resubmit them</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Blindly assuming a <code>BatchWriteItem</code>/<code>BatchGetItem</code> call fully succeeded is a common bug — always check <code>UnprocessedItems</code>/<code>UnprocessedKeys</code> isn't empty and retry-loop it.</p>
+
+    <hr class="divider">
+
+    <h4>How to avoid Write throttle</h4>
+    <ol>
+      <li><b>Rate Limiting (proactive)</b> — cap your OWN write rate before DDB ever sees it, instead of firing full speed and reacting to failures.
+        <ul>
+          <li>Token bucket: bucket = your WCU (e.g. 30), refills every second. No token → request waits. You physically can't exceed the cap.</li>
+          <li>Remember as: <b>"don't send more than you're allowed, ever."</b></li>
+        </ul>
+      </li>
+      <li><b>Backpressure (reactive)</b> — a feedback loop: when DDB signals it's struggling (throttle errors rising), the producer dynamically slows down instead of continuing at the same rate.
+        <ul>
+          <li>Pattern: put a <b>queue</b> (e.g. SQS) between producer and DDB. Consumer pulls slower when throttling rises, faster when it clears.</li>
+          <li>AIMD (like TCP): ramp rate up slowly when healthy, cut sharply the moment throttling appears.</li>
+          <li>Retries use <b>exponential backoff + jitter</b> — avoids a retry storm making throttling worse.</li>
+          <li>Remember as: <b>"listen to the system, slow down when it complains."</b></li>
+        </ul>
+
+        <h4>How do we know throttle happened? — 3 signals</h4>
+        <ul>
+          <li><b>Exception</b> — single-item calls (GetItem/PutItem/Query) throw <code>ProvisionedThroughputExceededException</code> directly.</li>
+          <li><b>Unprocessed list</b> — batch calls (BatchWriteItem/BatchGetItem) don't throw; check if <code>UnprocessedItems</code>/<code>UnprocessedKeys</code> is non-empty.</li>
+          <li><b>CloudWatch metric</b> — <code>WriteThrottleEvents</code>/<code>ReadThrottleEvents</code>, useful for system-wide monitoring, not per-request code.</li>
+        </ul>
+
+        <h4>How the signal feeds the backpressure loop</h4>
+        <pre>Track each write: success or throttled, in a sliding window (e.g. last 5 sec / last 100 requests)
+
+throttle_rate = throttled_count / total_count
+
+throttle_rate rising → slow down (consumer pulls slower from queue)
+throttle_rate == 0   → speed back up gradually (AIMD)</pre>
+        <p class="note">Simple version: the signal is whatever DDB tells you failed — exception (single-item), unprocessed list (batch), or CloudWatch metric (system-wide). Feed whichever one you have into a rolling throttle-rate counter, and use that number to speed up or slow down.</p>
+
+        <h4>Worked example — Provisioned WCU = 30, window = last 5 seconds</h4>
+        <table>
+          <thead><tr><th>Second</th><th>Writes sent</th><th>Succeeded (cap 30)</th><th>Throttled</th><th>throttle_rate this sec</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>25</td><td>25</td><td>0</td><td>0/25 = 0%</td></tr>
+            <tr><td>2</td><td>35</td><td>30</td><td>5</td><td>5/35 = 14%</td></tr>
+            <tr><td>3</td><td>40</td><td>30</td><td>10</td><td>10/40 = 25%</td></tr>
+          </tbody>
+        </table>
+        <pre>Sliding window (last 3 sec) = 25+35+40 = 100 sent, 0+5+10 = 15 throttled
+throttle_rate = 15 / 100 = 15%   → rising → BACK OFF</pre>
+        <p><b>Backpressure reacts:</b> consumer cuts send rate (e.g. 40/sec → 20/sec, below the 30 WCU cap so queue drains safely).</p>
+        <table>
+          <thead><tr><th>Second</th><th>Writes sent</th><th>Succeeded</th><th>Throttled</th><th>throttle_rate this sec</th></tr></thead>
+          <tbody>
+            <tr><td>4</td><td>20</td><td>20</td><td>0</td><td>0%</td></tr>
+            <tr><td>5</td><td>20</td><td>20</td><td>0</td><td>0%</td></tr>
+          </tbody>
+        </table>
+        <pre>New window (sec 3-5) = 40+20+20 = 80 sent, 10+0+0 = 10 throttled
+throttle_rate = 10/80 = 12.5%   → still positive but falling → hold or ease up slightly</pre>
+        <p>Once throttle_rate hits <b>0% for a couple consecutive windows</b> → AIMD ramps send rate back up gradually (e.g. 20 → 25 → 30/sec), watching throttle_rate again at each step. If it spikes again → cut hard (e.g. back to 15/sec) and repeat.</p>
+        <p class="note">That's the whole loop: <b>measure → compute rate → back off if rising, creep up if zero → repeat.</b></p>
+        <p class="note">Rate limiting = static cap set upfront (known capacity). Backpressure = dynamic adjustment based on real-time signal (changing conditions). Use both: rate limiter as the floor, backpressure as the live correction on top.</p>
+      </li>
+    </ol>
+
+    <hr class="divider">
+
+    <h4>How to avoid Read throttle</h4>
+    <p>Same two flow-control solutions as writes, plus one read-specific lever:</p>
+    <ol>
+      <li><b>Rate Limiting</b> — cap read requests at/under known RCU, upfront. Same token-bucket idea.</li>
+      <li><b>Backpressure</b> — watch throttle signal (exception / CloudWatch <code>ReadThrottleEvents</code>), dynamically slow down consumer, ramp back up when clear (AIMD).</li>
+      <li><b>Use eventually consistent reads instead of strongly consistent</b> — halves RCU cost per read (0.5 RCU vs 1 RCU per 4KB), so the same rate ceiling now handles 2x the actual request volume before throttling.</li>
+    </ol>
+    <p class="note">Rate limiting + backpressure = universal safety net for any throttling, read or write. Eventual consistency is a read-only extra lever — it reduces cost per request, not just the send rate.</p>
+
+  </section>
+
+  <h2 class="step">Step 7 &rarr; Partition Key Design &amp; Hot Partitions</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> What a "partition" actually is</h3>
+    <p>DynamoDB doesn't store your table as one giant blob. Internally, it's split into multiple <b>physical storage partitions</b> — each a self-contained chunk of SSD storage with its own fixed throughput ceiling. Many small independent shards behind the scenes, stitched together to look like one table.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> How DynamoDB decides which partition an item goes to</h3>
+    <p>Every partition key value gets run through an <b>internal hash function</b>. The hash output determines exactly which physical partition that item lands on.</p>
+    <pre>PutItem(orderId = "ORD123")
+   ↓
+hash("ORD123") → some hash value
+   ↓
+hash value maps to Partition #7 (deterministic, always same partition for same key)</pre>
+    <p>Items with the <b>same partition key</b> always land on the <b>same physical partition</b> (required — Query needs them co-located). Items with <b>different</b> keys spread across different partitions, ideally evenly, if the hash distributes well.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> Hard limits — per partition, not per table</h3>
+    <table>
+      <thead><tr><th>Limit</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Max throughput per partition</td><td><b>3000 RCU</b> and/or <b>1000 WCU</b></td></tr>
+        <tr><td>Max storage per partition</td><td><b>10 GB</b></td></tr>
+      </tbody>
+    </table>
+    <p>Table-level provisioned capacity (say, 10,000 RCU) is <b>not one shared pool</b> — DynamoDB divides it across all partitions. <b>A single partition can never exceed 3000 RCU / 1000 WCU</b>, no matter how much you've provisioned at the table level.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">4</span> What a "hot partition" is</h3>
+    <p>One partition receiving disproportionately more traffic than others, because too many requests hash to the same partition key (or a small handful of keys).</p>
+    <table>
+      <thead><tr><th>Bad pattern</th><th>Why it creates a hot partition</th></tr></thead>
+      <tbody>
+        <tr><td><b>Low cardinality key</b> — e.g. <code>status</code> as PK</td><td>Only 2-3 hash values → all traffic funnels into 2-3 partitions.</td></tr>
+        <tr><td><b>Time-based key</b> — e.g. <code>date</code> as PK</td><td>Everyone writing "today's" data hits the SAME partition all day.</td></tr>
+        <tr><td><b>Celebrity/whale problem</b> — e.g. <code>userId</code> as PK, one user gets 1000x traffic</td><td>That one partition gets slammed while millions of others idle.</td></tr>
+        <tr><td><b>Sequential/incrementing keys</b> — e.g. auto-increment order IDs</td><td>New writes always land on the "latest" partition range — moving hot spot.</td></tr>
+      </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <h3><span class="num">5</span> The impact — why this is the "aha" interview moment</h3>
+    <p>Table-level dashboard can look <b>totally healthy</b> while one partition throttles constantly:</p>
+    <pre>Table-level view (looks fine):     Reality (per-partition):
+Provisioned: 40,000 RCU            Partition 1: 3000/3000 RCU  ← THROTTLING
+Consumed:     3,000 RCU  (7.5%)    Partition 2:    5/3000 RCU  (idle)
+                                    Partition 3:    3/3000 RCU  (idle)</pre>
+    <p class="note"><b>Raising table-level provisioned capacity does NOT fix this</b> — a hot partition is still capped at 3000 RCU regardless of table total. Result: throttling, retries, cascading latency, degraded UX for a slice of traffic while dashboards suggest plenty of headroom.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">6</span> Solutions — what production code actually does</h3>
+    <p><b>Priority order — good key design first, salting is last resort:</b></p>
+
+    <h4>a) Good key design upfront (highest ROI — prevents the problem entirely)</h4>
+    <p>A good key needs: high cardinality + uniform traffic + matches the access pattern. Deciding PK vs SK:</p>
+    <ul>
+      <li><b>PK (Partition Key)</b> → the field that spreads data/traffic evenly across partitions. Pick the entity with many distinct, evenly-used values (e.g. <code>userId</code>, <code>tenantId#userId</code>).</li>
+      <li><b>SK (Sort Key)</b> → the field that lets you range-query / sort <b>within</b> one partition key's items. Same PK, many SK values, all co-located.</li>
+    </ul>
+    <p>Example — <code>Orders</code> table:</p>
+    <pre>PK = userId          SK = orderId
+─────────────────────────────────
+userId=U1   orderId=O1   {amount: 200, date: ...}
+userId=U1   orderId=O2   {amount: 450, date: ...}
+userId=U2   orderId=O3   {amount: 100, date: ...}</pre>
+    <ul>
+      <li><code>userId</code> as PK → high cardinality (millions of users), spreads writes/reads across partitions.</li>
+      <li><code>orderId</code> as SK → lets you fetch "all orders for U1" as one fast Query (range within the U1 partition), while each order stays uniquely identifiable.</li>
+    </ul>
+
+    <h4>b) Cache + single-flight (the actual go-to fix for hot READS)</h4>
+    <ul>
+      <li>Put DAX or Redis in front of DynamoDB — absorbs repeated reads for the same hot key before they ever reach DDB.</li>
+      <li>Combine with <b>single-flight / request coalescing</b> — if 100 concurrent requests miss cache for the same key at once, only 1 goes to DDB; the other 99 wait and share that result.</li>
+      <li>This is what most companies actually reach for — simpler than salting, solves the vast majority of real hot-key incidents.</li>
+    </ul>
+
+    <h4>c) Read/write salting — rarely used in practice</h4>
+    <ul>
+      <li>Append a random suffix to spread a hot key across multiple physical partitions (duplicate data for read-hot, split data for write-hot).</li>
+      <li>Reserved for extreme cases caching can't solve (e.g. a real-time counter under massive concurrent write load). Most teams never need to implement this — it's a last-resort, high-complexity fix.</li>
+    </ul>
+
+    <p class="note"><b>Interview soundbite:</b> "DynamoDB divides table-level provisioned capacity across physical partitions, each hard-capped at 3000 RCU / 1000 WCU / 10GB. A poorly chosen partition key funnels disproportionate traffic into one partition, throttling even when the table's aggregate utilization looks low. In production, the real fix is good key design (high cardinality PK, SK for range queries) plus a cache with single-flight in front of hot reads — salting is a last resort for extreme write-hot keys that can't be cached away."</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">7</span> Celebrity / whale problem — read vs write fix</h3>
+    <p>Key design is fine here (e.g. <code>userId</code> has high cardinality) — the issue is real-world traffic skewed toward ONE value. Different fix for reads vs writes:</p>
+    <table>
+      <thead><tr><th>Side</th><th>Problem</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><b>Read</b> (everyone reading the same hot item)</td><td>Stampede of identical reads</td><td><b>Cache + single-flight</b> — only 1 request hits DDB, rest wait/share the result</td></tr>
+        <tr><td><b>Write</b> (everyone writing distinct events, e.g. likes)</td><td>Flood of unique writes, can't be coalesced</td><td><b>Buffer + batch write</b> — aggregate events in memory/queue (e.g. Kinesis/SQS) for ~1 sec, flush ONE combined update instead of writing every event</td></tr>
+      </tbody>
+    </table>
+    <pre>Single-flight (read):  1M identical reads → 1 DDB read, rest share result
+Buffer+batch (write):  1M distinct likes  → aggregate for 1 sec → 1 DDB write ("+50,000")</pre>
+    <p class="note">Single-flight coalesces <b>duplicate</b> requests (reads). It can't help writes because each write is unique data — that needs aggregation instead.</p>
+
+  </section>
+
+  <h2 class="step">Step 8 &rarr; DynamoDB Streams</h2>
+  <section class="card">
+
+    <p><b>What is CDC:</b> Change Data Capture — every insert/update/delete on the table automatically gets recorded as an ordered event, like a change log (similar to a DB's WAL/binlog). We use it to react to data changes async (e.g. sync a lookup table) without the app manually publishing events.</p>
+
+    <h4>Shard &amp; order guarantee — simple example</h4>
+    <p>Shard = <b>one ordered lane</b>. Table <code>Orders</code>, PK=<code>userId</code>, 5 writes: <code>U1 create → U2 create → U1 update → U3 create → U1 delete</code>.</p>
+    <pre>Shard A (U1, U3): [INSERT U1] → [MODIFY U1] → [INSERT U3] → [REMOVE U1]   ← order preserved
+Shard B (U2):     [INSERT U2]</pre>
+    <p>Same key → always same shard → order guaranteed. Different keys → may land in different shards → no order guarantee between them (but can run in parallel). <b>You never manage this — DDB handles shard routing automatically.</b></p>
+
+    <hr class="divider">
+
+    <h3>Deep dive</h3>
+    <ol>
+      <li><b>What it is</b> — every write generates a stream record: <code>{eventName: INSERT/MODIFY/REMOVE, keys, newImage}</code>.</li>
+      <li><b>Shards</b> — internally identical concept to Kinesis. Ordering only guaranteed <i>within</i> a shard, which maps to a subset of partition keys.</li>
+      <li><b>StreamViewType</b> — controls what's in each record:
+        <table>
+          <thead><tr><th>Type</th><th>What you get</th></tr></thead>
+          <tbody>
+            <tr><td><code>KEYS_ONLY</code></td><td>Just the key attributes</td></tr>
+            <tr><td><code>NEW_IMAGE</code></td><td>Item after the change</td></tr>
+            <tr><td><code>OLD_IMAGE</code></td><td>Item before the change</td></tr>
+            <tr><td><code>NEW_AND_OLD_IMAGES</code></td><td>Both — needed to diff what changed</td></tr>
+          </tbody>
+        </table>
+      </li>
+      <li><b>Lambda consumption (Event Source Mapping)</b> — polls each shard, batches records, invokes your function <b>once per batch</b> (array of records, not one event).</li>
+      <li><b>Failure handling — the important gotcha</b> — if Lambda errors on a batch, it retries the SAME batch and <b>blocks that shard</b> from advancing until it succeeds or retries exhaust.
+        <pre>Batch fails → retry same batch → still failing → shard STUCK
+   ↓
+New changes for that shard's keys pile up unprocessed
+   ↓
+CloudWatch "IteratorAge" metric grows — your lag indicator</pre>
+        Mitigate with <code>bisectBatchOnFunctionError</code>, an on-failure DLQ destination, and idempotent consumer logic (retries can redeliver the same record).
+      </li>
+      <li><b>Retention</b> — 24 hours default (up to 7 days extended). If a stuck shard isn't fixed in time, those events are gone — needs manual reconciliation.</li>
+    </ol>
+
+    <hr class="divider">
+
+    <h3>Interviewer follow-up: "Stream data isn't flowing — how do you debug?"</h3>
+    <p>Check in this order — cheapest/most upstream first:</p>
+    <ol>
+      <li><b>Is data actually being written to the table?</b> (rules out "nothing to stream in the first place")</li>
+      <li><b>Is Streams enabled on the table?</b> (rules out "no stream even exists")</li>
+      <li><b>Is the Lambda ESM enabled/attached?</b> (rules out "wiring between stream and Lambda is off")</li>
+      <li><b>Check <code>IteratorAge</code> (CloudWatch)</b> — tells you whether the problem is upstream (steps 1-3, nothing flowing at all) or downstream (ESM fine, but Lambda stuck/erroring on a batch — check Lambda logs/errors next).</li>
+    </ol>
+
+    <h4>What is ESM (Event Source Mapping)?</h4>
+    <p>The glue/connector AWS creates between your Lambda and the stream — it's what polls the shards and invokes Lambda. Without it, Lambda has no idea the stream exists.</p>
+    <pre>DynamoDB Stream  ←——— ESM ———→  Lambda function
+   (the data)      (the wiring)     (your code)</pre>
+    <ul>
+      <li>Created when you wire "trigger this Lambda from this Stream" (console/CLI/IaC).</li>
+      <li>A separate AWS resource with its own state (<code>Enabled</code>/<code>Disabled</code>) and settings (batch size, retry config, DLQ, <code>bisectBatchOnFunctionError</code>).</li>
+      <li>It can end up <code>Disabled</code> — manually, or auto-disabled by AWS after repeated failures — meaning Lambda's code is fine but nothing is even calling it.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3>How to actually check this in AWS console</h3>
+    <p><b>1. DynamoDB → table → Exports and streams tab</b></p>
+    <img src="images/img.png" alt="DynamoDB stream details" style="max-width:100%;border-radius:8px;border:1px solid rgba(30,144,255,0.3);margin:10px 0;">
+    <ul>
+      <li><b>Stream status: On</b> → confirms Streams is enabled on the table (checklist step 2).</li>
+      <li><b>View type: New and old images</b> → confirms which <code>StreamViewType</code> is set.</li>
+      <li><b>Trigger → Function</b> → shows exactly which Lambda is wired to consume this stream.</li>
+      <li><b>Trigger → State: Enabled</b> → confirms the ESM is active, not disabled (checklist step 3).</li>
+      <li><b>Last processing result: OK</b> → tells you the last batch Lambda processed succeeded.</li>
+    </ul>
+
+    <p><b>2. Lambda → function → Configuration → Triggers</b></p>
+    <img src="images/img_1.png" alt="Lambda trigger / ESM configuration" style="max-width:100%;border-radius:8px;border:1px solid rgba(30,144,255,0.3);margin:10px 0;">
+    <ul>
+      <li><b>state: Enabled</b> → same ESM enabled check, from the Lambda side.</li>
+      <li><b>Batch size / Batch window</b> → how many records (or how long) it waits before invoking your function per batch.</li>
+      <li><b>Concurrent batches per shard</b> → how many batches from the same shard can process in parallel (affects throughput vs ordering trade-off).</li>
+      <li><b>Event source mapping ARN / UUID</b> → the ESM's unique resource ID.</li>
+      <li><b>Last processing result: OK</b> → confirms this specific ESM's last batch succeeded.</li>
+      <li><b>Maximum age of record: 604800</b> → retention/max-record-age setting in seconds (7 days here).</li>
+      <li><b>On-failure destination: arn:...sns:...</b> → where failed batches go after retries exhaust.</li>
+      <li><b>Retry attempts: 20</b> → how many times a failing batch is retried before going to the failure destination.</li>
+      <li><b>Split batch on error: Yes</b> → <code>bisectBatchOnFunctionError</code> is on — a bad record won't block the whole batch forever.</li>
+      <li><b>Starting position: TRIM_HORIZON</b> → new ESMs start reading from the oldest available record.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3>Interviewer follow-up: "A burst of writes hits the table — does Lambda get bombarded and miss processing?"</h3>
+    <p class="note">"DynamoDB Streams + Lambda is a pull-based, auto-scaling consumer, not a push model — a write burst doesn't overwhelm Lambda by flooding it; the ESM scales concurrency per shard (and via Parallelization Factor, even within a shard) to keep pace. The only real limit is Lambda's account concurrency ceiling — if hit, processing just lags temporarily (visible as rising IteratorAge) and catches up once the burst passes, with no data loss as long as it's within the retention window."</p>
+
+  </section>
+
+  <h2 class="step">Step 9 &rarr; Conditional Writes / Optimistic Locking</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> The problem — Lost Update</h3>
+    <pre>Item: {productId: "P1", stock: 10}
+
+Client A reads stock=10 (wants to sell 2 → set stock=8)
+Client B reads stock=10 (wants to sell 3 → set stock=7)
+
+A writes: stock=8
+B writes: stock=7   ← overwrites A's update, A's sale is silently lost!
+Correct answer should've been 10-2-3=5, got 7 instead.</pre>
+    <p>DynamoDB has no locking (no <code>SELECT FOR UPDATE</code>) — "read → compute → write" isn't atomic by default, so concurrent writers can clobber each other.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> Conditional Writes — the fix, atomically</h3>
+    <p>Every write API (<code>PutItem</code>/<code>UpdateItem</code>/<code>DeleteItem</code>) supports <code>ConditionExpression</code>: "only perform this write IF this is true — else fail." Checked and written <b>in one atomic server-side call</b>, no race window.</p>
+    <pre>UpdateItem(key=P1, update="SET stock = stock - 2", condition="stock >= 2")</pre>
+    <p>Fails with <code>ConditionalCheckFailedException</code> if condition doesn't hold — nothing is written.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> Optimistic Locking — version attribute pattern</h3>
+    <p>Add a <code>version</code> field. Every write checks version hasn't changed, and bumps it.</p>
+    <pre>A: UpdateItem SET stock=8,version=4 WHERE version=3   ✅ (DB still had version 3)
+B: UpdateItem SET stock=7,version=4 WHERE version=3   ❌ FAILS (DB is now version 4)
+B re-reads (stock=8,version=4), retries: SET stock=5,version=5 WHERE version=4   ✅ correct!</pre>
+    <p>"Optimistic" = no lock held upfront — assume conflicts are rare, detect + retry only when they happen.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">4</span> How this looks in production code</h3>
+    <p><b>Never do a separate check-then-write</b> — that reintroduces the race. Instead, attach the expected version as the <code>ConditionExpression</code> on the SAME write call:</p>
+    <pre>loop (up to N retries):
+  item = GetItem(id)                     // read current state
+  newStock = item.stock - qty
+
+  try:
+    UpdateItem(
+      update    = "SET stock=:s, version=:v",
+      condition = "version=:expected",
+      values    = { s: newStock, v: item.version+1, expected: item.version }
+    )
+    return SUCCESS
+  catch ConditionalCheckFailedException:
+    continue   // someone else updated it — re-read and retry</pre>
+    <p>DynamoDB checks the version AND writes in <b>one atomic request</b> — either both happen or neither does. Your app's only job is to catch the failure and retry the loop.</p>
+
+  </section>
+
+  <h2 class="step">Step 10 &rarr; LSI vs GSI</h2>
+  <section class="card">
+
+    <p><b>LSI = Local Secondary Index.</b> <b>GSI = Global Secondary Index.</b></p>
+    <p><b>Simple core difference:</b> LSI shares the base table's partition key. GSI can use a completely different partition key.</p>
+
+    <table>
+      <thead><tr><th></th><th>LSI</th><th>GSI</th></tr></thead>
+      <tbody>
+        <tr><td>Partition key</td><td>Same as base table (can't change)</td><td>Can be any attribute</td></tr>
+        <tr><td>Sort key</td><td>Different from base table's sort key</td><td>Can be any attribute</td></tr>
+        <tr><td>When created</td><td>Only at table creation time — can't add later</td><td>Anytime — add/remove whenever</td></tr>
+        <tr><td>Capacity</td><td>Shares the base table's RCU/WCU</td><td>Has its own separate RCU/WCU pool</td></tr>
+        <tr><td>Consistency</td><td>Supports strong or eventual reads</td><td>Eventual only — no strong consistency option</td></tr>
+        <tr><td>Storage limit</td><td>10GB per partition key value across base table + all LSIs combined</td><td>No such combined limit</td></tr>
+        <tr><td>Max count</td><td>5 per table</td><td>20 per table (default)</td></tr>
+      </tbody>
+    </table>
+
+    <p class="note"><b>LSI</b> = "same partition, different sort order" — e.g. base table PK=<code>userId</code>, SK=<code>orderDate</code>; LSI gives you PK=<code>userId</code>, SK=<code>orderAmount</code> instead — same user's data, just sorted/filtered differently.<br>
+    <b>GSI</b> = "a whole different way to slice the table" — e.g. base table PK=<code>orderId</code>; GSI gives you PK=<code>userId</code> — totally different access pattern.</p>
+
+    <hr class="divider">
+
+    <h3>Why we need it / when we use it</h3>
+
+    <h4>1. You need STRONG consistency on an alternate sort order (the big one)</h4>
+    <p>GSI can never give you strongly consistent reads — only eventual. If your access pattern needs the freshest possible data on a secondary sort/filter, LSI is your only option.</p>
+    <pre>Orders table: PK = userId, SK = orderDate   (base table)
+
+You also need: "get this user's orders sorted by amount" — WITH strong consistency,
+because right after a user places an order, they view their order list and it
+must reflect that order immediately (financial/inventory context — staleness unacceptable).
+
+→ LSI: PK = userId, SK = amount, ConsistentRead: true   ✅ works
+→ GSI: PK = userId, SK = amount, ConsistentRead: true   ❌ not allowed, GSI is eventual-only</pre>
+
+    <h4>2. No extra capacity cost — shares the base table's RCU/WCU</h4>
+    <p>A GSI needs its own provisioned/on-demand capacity — separate scaling, separate monitoring, separate cost, and its own throttling risk if under-provisioned. An LSI shares the base table's throughput pool — no separate capacity planning, no separate bill line, one less thing to monitor/tune.</p>
+
+  </section>
+
+  <h2 class="step">Step 11 &rarr; Single-Table Design</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> What it is</h3>
+    <p>Instead of a separate table per entity (Users, Orders, OrderItems), put <b>all entity types into ONE table</b>, using generic <code>PK</code>/<code>SK</code> names and a <code>Type</code> attribute to tell items apart.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> Why it's needed</h3>
+    <p><b>DynamoDB has no JOIN.</b> With separate tables, fetching related data needs multiple round trips:</p>
+    <pre>GetItem(Users, userId) → Query(Orders, userId) → Query(OrderItems, orderId) × N orders
+= N+1 round trips just to render one page</pre>
+    <p>Single-table design "pre-joins" data at write time by co-locating related items under the same partition key, so <b>one Query fetches everything.</b></p>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> The pattern — Adjacency List, with example</h3>
+    <pre>PK              SK              Type        Data
+──────────────────────────────────────────────────────────
+USER#123        PROFILE#123     USER        {name, email}
+USER#123        ORDER#456       ORDER       {orderDate, total: 200}
+USER#123        ORDER#789       ORDER       {orderDate, total: 450}
+ORDER#456       ITEM#001        ORDERITEM   {productId: P1, qty: 2}
+PRODUCT#P1      METADATA        PRODUCT     {name: "Shoe", price: 50}</pre>
+    <pre>Query(PK = "USER#123") → returns PROFILE#123, ORDER#456, ORDER#789 — ALL in ONE call</pre>
+
+    <hr class="divider">
+
+    <h3><span class="num">4</span> PK can repeat — with a Sort Key, uniqueness is PK+SK together</h3>
+    <ul>
+      <li>Table with <b>only</b> a partition key → PK must be unique, no duplicates.</li>
+      <li>Table with <b>PK + SK</b> (composite key) → PK CAN repeat, as long as SK differs each time. Uniqueness is on the <b>(PK, SK) pair</b>, not PK alone.</li>
+      <li>This is exactly why single-table design works above — <code>PK="USER#123"</code> repeats 3 times, distinguished by different <code>SK</code> values.</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">5</span> Trade-offs</h3>
+    <ul>
+      <li>Must know <b>all access patterns upfront</b> — unlike SQL, can't just add a new JOIN later.</li>
+      <li>Generic <code>PK</code>/<code>SK</code> aren't self-documenting — needs a clear entity chart/docs.</li>
+      <li>Not a fit for ad-hoc/analytical queries — those belong in a separate OLAP store (e.g. via Streams → Redshift/S3).</li>
+    </ul>
+
+    <p class="note"><b>Interview soundbite:</b> "DynamoDB has no JOIN, so single-table design co-locates related entities under the same partition key (adjacency list pattern) using generic PK/SK and a type attribute, so one Query replaces N+1 round trips. It only works because a composite key's uniqueness is PK+SK together, not PK alone — the trade-off is you must know your access patterns upfront and document the schema well since generic keys aren't self-describing."</p>
+
+  </section>
+
+  <h2 class="step">Step 12 &rarr; Transactions (TransactWriteItems)</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> Simple definition</h3>
+    <p>Groups <b>up to 100 write operations</b> (Put/Update/Delete/ConditionCheck), across one or more tables, into a single <b>all-or-nothing</b> unit — either every operation succeeds, or none do.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> Use of it — example</h3>
+    <p>Conditional writes only protect <b>one item</b>. Transactions are for when <b>multiple items must change together</b>:</p>
+    <pre>Transfer $100 from Account A to Account B:
+
+TransactWriteItems([
+  { Update: A, expr: "SET balance = balance - 100", condition: "balance >= 100" },
+  { Update: B, expr: "SET balance = balance + 100" }
+])
+
+→ Both succeed together, or both roll back. Never a half-done state (money never "vanishes").</pre>
+    <p>Costs <b>2x WCU</b> — extra internal coordination (prepare + commit) to guarantee atomicity.</p>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> Transactions vs Batch</h3>
+    <table>
+      <thead><tr><th></th><th>BatchWriteItem</th><th>TransactWriteItems</th></tr></thead>
+      <tbody>
+        <tr><td>Atomicity</td><td>NOT atomic — partial success possible, failed items in <code>UnprocessedItems</code></td><td>Fully atomic — all succeed or all fail</td></tr>
+        <tr><td>Cost</td><td>Normal cost</td><td>2x cost</td></tr>
+        <tr><td>Use case</td><td>Write independent items efficiently</td><td>Items MUST change together or not at all</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="num">4</span> Transactions vs Conditional Write / Optimistic Locking</h3>
+    <table>
+      <thead><tr><th></th><th>Conditional Write</th><th>Transaction</th></tr></thead>
+      <tbody>
+        <tr><td>Scope</td><td>1 item</td><td>Up to 100 items</td></tr>
+        <tr><td>Cost</td><td>Normal</td><td>2x</td></tr>
+        <tr><td>Use case</td><td>Prevent concurrent overwrite on ONE item</td><td>Atomicity across MULTIPLE items</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Default to conditional writes for single-item concurrency (cheaper). Use transactions only when the business logic genuinely needs multiple items to change atomically together.</p>
+
+  </section>
+
+  <h2 class="step">Step 13 &rarr; On-Demand vs Provisioned</h2>
+  <section class="card">
+
+    <h3><span class="num">1</span> What each is</h3>
+    <ul>
+      <li><b>Provisioned</b> — you (or auto-scaling) set RCU/WCU ahead of time. Reserved, billed whether used or not, throttles beyond the ceiling.</li>
+      <li><b>On-Demand</b> — no capacity set. DynamoDB auto-scales to whatever traffic arrives, billed <b>per request actually made</b>.</li>
+    </ul>
+
+    <p><b>Provisioned — example:</b></p>
+    <pre>You set: 100 RCU provisioned, all day, every day
+
+Day 1: app uses 100 RCU at peak, 10 RCU overnight
+       → you still PAY for 100 RCU the whole 24 hours, even though only needed during peak
+
+Traffic spikes to 150 RCU one afternoon → THROTTLED (ceiling was set at 100)</pre>
+    <p>Like <b>renting a car for the month</b> — same rate whether you drive it daily or leave it parked. Need 2 cars for a weekend? Tough, you only rented 1.</p>
+
+    <p><b>On-Demand — example:</b></p>
+    <pre>You set: nothing
+
+Hour 1: app makes 50 reads   → billed for exactly 50
+Hour 2: app makes 5 reads    → billed for exactly 5
+Hour 3: app makes 500 reads  → billed for exactly 500, scales up automatically, no throttle</pre>
+    <p>Like <b>taking an Uber per trip</b> — pay only for rides you actually take. Convenient for unexpected trips, but costs more per mile than a car you already own and drive constantly.</p>
+
+    <table>
+      <thead><tr><th></th><th>Provisioned</th><th>On-Demand</th></tr></thead>
+      <tbody>
+        <tr><td>What you set</td><td>Fixed capacity number upfront</td><td>Nothing</td></tr>
+        <tr><td>Billed for</td><td>Reserved ceiling, whether used or not</td><td>Only actual requests made</td></tr>
+        <tr><td>Traffic exceeds setting</td><td>Throttled</td><td>Scales automatically (within reason)</td></tr>
+        <tr><td>Cost per unit throughput</td><td>Cheaper, if utilization is high</td><td>Pricier per unit, but zero waste</td></tr>
+        <tr><td>Analogy</td><td>Renting a car for the month</td><td>Taking an Uber per trip</td></tr>
+      </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <h3><span class="num">2</span> Billing trade-off</h3>
+    <pre>Provisioned:  Pay for CAPACITY, whether used or not. Cheaper per-request IF utilization is high.
+On-Demand:    Pay per ACTUAL request. ~5-7x pricier per unit, but zero waste, zero under-provision risk.</pre>
+
+    <hr class="divider">
+
+    <h3><span class="num">3</span> On-Demand still has limits — doesn't remove hot partitions</h3>
+    <ul>
+      <li>New On-Demand tables start with a default ceiling (~40,000 combined RCU/WCU), and can generally absorb up to <b>2x the previous traffic peak</b> without risk.</li>
+      <li><b>Per-partition limits (3000 RCU / 1000 WCU) still apply</b> — a bad partition key can still throttle on On-Demand (Step 7 problem is architectural, not a capacity-mode setting).</li>
+    </ul>
+
+    <hr class="divider">
+
+    <h3><span class="num">4</span> When to pick which</h3>
+    <table>
+      <thead><tr><th>Situation</th><th>Pick</th></tr></thead>
+      <tbody>
+        <tr><td>New/unknown traffic pattern</td><td>On-Demand</td></tr>
+        <tr><td>Spiky/unpredictable (flash sales, viral)</td><td>On-Demand — reacts faster than provisioned auto-scaling's 1-2 min lag</td></tr>
+        <tr><td>Steady, predictable, high-volume</td><td>Provisioned + auto-scaling — cheaper at scale</td></tr>
+        <tr><td>Cost-sensitive, well-understood workload</td><td>Provisioned</td></tr>
+        <tr><td>Dev/test/low-traffic tables</td><td>On-Demand — idle costs nothing</td></tr>
+      </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <h3><span class="num">5</span> Switching modes</h3>
+    <p>Can switch Provisioned ↔ On-Demand, but only <b>once per 24 hours</b> — a considered choice, not a dynamic per-traffic toggle.</p>
+
+    <p class="note"><b>Interview soundbite:</b> "Provisioned is cheaper per unit of throughput but needs capacity planning and risks throttling if under-provisioned. On-Demand costs more per request but scales automatically, ideal for unpredictable or new workloads. Neither mode removes the per-partition throughput ceiling — a bad partition key still throttles on On-Demand, since that limit is architectural."</p>
+
+  </section>
+
+</div>
+
+</body>
+</html>
