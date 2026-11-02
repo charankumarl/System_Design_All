@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloom Filters — From Scratch to Interview-Ready</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2024; --muted:#5c6470; --line:#e3e6ea;
+    --accent:#c8322b; --accent-soft:#fdecea;
+    --blue:#2563eb; --blue-soft:#e8f0fe;
+    --green:#1a7f4b; --green-soft:#e6f5ec;
+    --amber:#a86400; --amber-soft:#fdf3e0;
+    --purple:#6b3fa0; --purple-soft:#f1eafa;
+    --code-bg:#12161b; --code-ink:#dfe6ee;
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14171a; --card:#1c2024; --ink:#e8eaed; --muted:#a0a8b3; --line:#2c3238;
+      --accent:#ff6b60; --accent-soft:#2a1c1b;
+      --blue:#7aa7ff; --blue-soft:#1a2130;
+      --green:#5fcf92; --green-soft:#152a20;
+      --amber:#e6b45c; --amber-soft:#2a2318;
+      --purple:#c4a3f0; --purple-soft:#241c33;
+      --code-bg:#0d1013; --code-ink:#dfe6ee;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+
+  header.hero{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 28px 24px;margin-bottom:26px;border-top:4px solid var(--accent);}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 8px}
+  h1{margin:0 0 10px;font-size:28px;line-height:1.25}
+  .sub{margin:0;color:var(--muted);font-size:15px}
+
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 22px;margin-bottom:26px;}
+  nav.toc h2{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  nav.toc li{margin:4px 0;break-inside:avoid}
+  nav.toc a{color:var(--blue);text-decoration:none}
+  nav.toc a:hover{text-decoration:underline}
+  @media (max-width:640px){ nav.toc ol{columns:1} }
+
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px 26px;margin-bottom:22px;}
+  h2.sec{margin:0 0 4px;font-size:21px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 6px;
+    border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;flex:0 0 auto;}
+  h3{margin:22px 0 8px;font-size:16px}
+  h4{margin:16px 0 6px;font-size:14.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  p{margin:10px 0}
+
+  .oneline{margin:10px 0 4px;padding:12px 16px;border-left:3px solid var(--blue);
+    background:var(--blue-soft);border-radius:0 8px 8px 0;font-weight:600;}
+  .note{margin:14px 0;padding:12px 16px;border-left:3px solid var(--amber);
+    background:var(--amber-soft);border-radius:0 8px 8px 0;font-size:14.5px;}
+  .good{margin:14px 0;padding:12px 16px;border-left:3px solid var(--green);
+    background:var(--green-soft);border-radius:0 8px 8px 0;font-size:14.5px;}
+  .bad{margin:14px 0;padding:12px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:14.5px;}
+  .key{margin:14px 0;padding:14px 18px;border:2px solid var(--purple);
+    background:var(--purple-soft);border-radius:10px;font-size:15px;}
+  .key b{color:var(--purple)}
+  .ask{margin:12px 0;padding:12px 16px;border:1px dashed var(--blue);border-radius:10px;
+    background:var(--blue-soft);font-size:14.5px;}
+  .ask .q{font-weight:700;display:block;margin-bottom:6px}
+
+  pre{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;
+    overflow-x:auto;font-size:13.5px;line-height:1.55;margin:12px 0;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+  p code,li code,td code{background:var(--blue-soft);color:var(--ink);padding:1px 6px;border-radius:5px}
+
+  .formula{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:20px 18px;
+    text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:16px;font-weight:700;line-height:1.9;margin:16px 0;overflow-x:auto;}
+  .formula .hl{color:#ffd479}
+  .formula .sm{display:block;font-size:12.5px;font-weight:400;color:#8fa3b8;margin-top:8px}
+
+  .tablewrap{overflow-x:auto;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:var(--blue-soft);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--bg) 55%, transparent)}
+  td.ok{color:var(--green);font-weight:700}
+  td.no{color:var(--accent);font-weight:700}
+  .hlrow td{background:var(--amber-soft) !important}
+
+  /* bit array visual */
+  .bitrow{display:flex;gap:4px;flex-wrap:wrap;margin:12px 0 4px;align-items:flex-start}
+  .bit{width:38px;text-align:center;font-family:ui-monospace,Menlo,monospace;flex:0 0 auto}
+  .bit .v{border:1px solid var(--line);border-radius:6px;padding:7px 0;font-size:14px;font-weight:700;background:var(--bg)}
+  .bit .i{font-size:10px;color:var(--muted);margin-top:3px}
+  .bit.on .v{background:var(--green);color:#fff;border-color:var(--green)}
+  .bit.hit .v{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .bit.fp .v{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .legend{font-size:13px;color:var(--muted);margin:6px 0 2px}
+  .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700;margin-right:8px;color:#fff}
+  .c-on{background:var(--green)} .c-hit{background:var(--blue)} .c-fp{background:var(--accent)}
+
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:5px 0}
+  footer{color:var(--muted);font-size:13px;text-align:center;padding-top:10px}
+  .xref{font-size:14px;color:var(--muted);margin-top:6px}
+  .xref a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">System Design · Probabilistic Data Structures</p>
+  <h1>Bloom Filters — From Scratch to Interview-Ready</h1>
+  <p class="sub">What they are, how they work bit by bit, the math you need, the variants, where real systems use them, and exactly what to say when an interviewer asks.</p>
+</header>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#where">Where Bloom filters are used</a></li>
+    <li><a href="#problem">The problem it solves</a></li>
+    <li><a href="#hashset">Why not just use a HashSet?</a></li>
+    <li><a href="#what">What a Bloom filter is</a></li>
+    <li><a href="#parts">The two ingredients</a></li>
+    <li><a href="#add">Adding an item — worked example</a></li>
+    <li><a href="#check">Checking an item — the two answers</a></li>
+    <li><a href="#fp">False positives — why they happen</a></li>
+    <li><a href="#nofn">Why there are never false negatives</a></li>
+    <li><a href="#delete">Why you cannot delete</a></li>
+    <li><a href="#saturation">Saturation — when every bit is 1</a></li>
+    <li><a href="#growth">What if the item count grows?</a></li>
+    <li><a href="#math">The math — sizing formulas</a></li>
+    <li><a href="#sizing">Sizing cheat sheet</a></li>
+    <li><a href="#k">Choosing k — the trade-off</a></li>
+    <li><a href="#real">How it is really implemented</a></li>
+    <li><a href="#code">Working code</a></li>
+    <li><a href="#ops">What you can and cannot do</a></li>
+    <li><a href="#variants">Variants</a></li>
+    <li><a href="#cousins">Bloom vs HyperLogLog vs Count-Min</a></li>
+    <li><a href="#world">Real systems that use it</a></li>
+    <li><a href="#playbook">Interview playbook</a></li>
+    <li><a href="#qa">Common interview questions</a></li>
+    <li><a href="#gotchas">Gotchas that catch people out</a></li>
+    <li><a href="#cheat">One-page cheat sheet</a></li>
+  </ol>
+</nav>
+
+<section id="where">
+  <h2 class="sec"><span class="num">1</span> Where Bloom filters are used</h2>
+  <div class="oneline">🗺️ "You have already been using them — inside Redis, Cassandra, RocksDB, Chrome and Parquet."</div>
+
+  <p>Before the theory, it helps to see how common this thing is. Bloom filters are not an exotic academic structure — they are quietly running inside most of the infrastructure you touch every day.</p>
+
+  <h3>Databases &amp; storage engines</h3>
+  <p>This is the flagship use. Any database built on <strong>LSM trees</strong> stores data in many immutable files (SSTables), and a read might have to check all of them. A tiny in-memory Bloom filter per file lets the engine skip the ones that definitely do not hold the key — turning several disk seeks into one.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>System</th><th>What it filters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Apache Cassandra</strong></td><td>One filter per SSTable. Tunable via <code>bloom_filter_fp_chance</code> per table — you can literally set the false positive rate in your schema.</td></tr>
+      <tr><td><strong>RocksDB / LevelDB</strong></td><td>Per-SST-file filters to avoid disk reads. RocksDB is embedded in countless services, so this is probably the Bloom filter you use most without knowing.</td></tr>
+      <tr><td><strong>Apache HBase</strong></td><td>Row-level and row+column-level filters on HFiles.</td></tr>
+      <tr><td><strong>Google Bigtable</strong></td><td>The original published design that popularised the pattern.</td></tr>
+      <tr><td><strong>ScyllaDB, Accumulo, InfluxDB</strong></td><td>Same SSTable-skipping idea.</td></tr>
+      <tr><td><strong>PostgreSQL</strong></td><td>The <code>bloom</code> extension provides a Bloom-filter index type for multi-column equality lookups.</td></tr>
+      <tr><td><strong>Oracle</strong></td><td>Uses Bloom filters internally to prune rows early in hash joins and partition pruning.</td></tr>
+      <tr><td><strong>DynamoDB</strong></td><td><em>Not publicly documented.</em> AWS does not publish DynamoDB's storage internals, so treat any claim that it uses Bloom filters as unverified — in an interview, cite Cassandra or RocksDB instead, where it is documented.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Caches</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>System</th><th>What it filters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Redis</strong></td><td>The <strong>RedisBloom</strong> module adds <code>BF.ADD</code> / <code>BF.EXISTS</code> as first-class commands, so many application servers can share one filter over the network.</td></tr>
+      <tr><td><strong>Any cache + DB stack</strong></td><td><strong>Cache penetration defence.</strong> Requests for keys that do not exist miss the cache and hammer the database. A filter of all valid keys answers "definitely not" and returns a 404 without touching either.</td></tr>
+      <tr><td><strong>CDNs (Akamai)</strong></td><td>"One-hit wonders" — URLs requested exactly once. A filter keeps them out of cache until a second request proves they are worth storing.</td></tr>
+      <tr><td><strong>Squid proxy</strong></td><td>Cache digests — peers exchange compact filters so each knows roughly what the others hold.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Big data &amp; query engines</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>System</th><th>What it filters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Apache Parquet / ORC</strong></td><td>Bloom filter indexes are part of the file format spec. A query engine reads the filter in the footer and skips entire row groups.</td></tr>
+      <tr><td><strong>Spark, Hive, Presto/Trino</strong></td><td>Join pruning — build a filter from the small side of a join, ship it to the scan of the big side, and discard non-matching rows before they are ever read.</td></tr>
+      <tr><td><strong>Hadoop MapReduce</strong></td><td>The classic Bloom join, cutting shuffle volume dramatically.</td></tr>
+      <tr><td><strong>Apache Lucene</strong></td><td>A Bloom-filtering postings format for skipping segments on term lookups.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Web, browsers &amp; security</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>System</th><th>What it filters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Google Chrome</strong></td><td>Safe Browsing historically shipped a local Bloom filter of malicious URLs, so the 99.9% of safe URLs never triggered a network call. Later redesigned, but it is the textbook example.</td></tr>
+      <tr><td><strong>Web crawlers</strong></td><td>"Have I already crawled this URL?" across billions of pages — prevents infinite loops and duplicated work.</td></tr>
+      <tr><td><strong>Password breach checkers</strong></td><td>Ship a small filter instead of 800 million leaked passwords, so the check runs locally.</td></tr>
+      <tr><td><strong>Spam / malware blocklists</strong></td><td>Is this sender, IP, or file hash on a known-bad list?</td></tr>
+      <tr><td><strong>Medium</strong></td><td>Has this reader already seen this post? Keeps recommendations from repeating.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Blockchain</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>System</th><th>What it filters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ethereum</strong></td><td>Every block header carries a 2048-bit <code>logsBloom</code> of the events in that block, so light clients skip blocks with nothing relevant to them.</td></tr>
+      <tr><td><strong>Bitcoin (BIP 37)</strong></td><td>SPV wallets sent a filter so nodes returned only relevant transactions. Now largely deprecated — the filter leaked enough to deanonymise wallets, a good cautionary tale.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="key"><b>Notice the pattern behind every row.</b> In each case there is a <b>cheap check</b> sitting in front of an <b>expensive one</b> — a disk seek, a network call, a database query, a full file scan. The Bloom filter never replaces the expensive operation; it just eliminates the large majority of cases where the expensive operation would have found nothing. That is the shape to look for in a system design interview.</div>
+
+  <p class="xref">Sections 2–20 build the structure from scratch; <a href="#world">section 21</a> walks through the database and cache use cases in detail.</p>
+</section>
+
+<section id="problem">
+  <h2 class="sec"><span class="num">2</span> The problem it solves</h2>
+  <div class="oneline">❓ "Have I seen this before?" — asked billions of times, on a memory budget.</div>
+
+  <p>A huge number of systems need to answer one boring question very fast:</p>
+<pre>Web crawler      →  "Have I already crawled this URL?"
+Signup form      →  "Is this username already taken?"
+Ad system        →  "Have I already shown this ad to this user?"
+Cache layer      →  "Does this key even exist in the database?"
+Password check   →  "Is this password in the breached list?"
+News feed        →  "Has this user already seen this article?"</pre>
+
+  <p>Each one is a <strong>set membership</strong> question. Easy when the set is small. The trouble starts at scale:</p>
+  <ul>
+    <li>A crawler tracking <strong>10 billion URLs</strong></li>
+    <li>A feed tracking <strong>every article every user has seen</strong></li>
+    <li>A breach database with <strong>800 million passwords</strong></li>
+  </ul>
+
+  <p>You cannot hold those in memory the obvious way. And going to disk or the database for every single check is exactly the cost you were trying to avoid.</p>
+
+  <div class="key"><b>The insight:</b> for a lot of these questions, you do not need a perfect answer. You need a <b>fast, tiny, mostly-right</b> answer that lets you skip the expensive work most of the time. A Bloom filter is that trade: give up a little accuracy, get back an enormous amount of memory.</div>
+</section>
+
+<section id="hashset">
+  <h2 class="sec"><span class="num">3</span> Why not just use a HashSet?</h2>
+  <p>The obvious answer is <code>HashSet&lt;String&gt;</code>. It works — until you do the arithmetic.</p>
+
+  <h4>Storing 1 billion URLs in a HashSet</h4>
+<pre>Average URL length            ≈  60 bytes
+String object overhead        ≈  40 bytes
+HashSet entry + pointer       ≈  50 bytes
+                              ─────────────
+Per URL                       ≈ 150 bytes
+
+1,000,000,000 × 150 bytes     ≈ 150 GB</pre>
+
+  <p>150 GB of RAM to answer a yes/no question. Now the same job with a Bloom filter at a 1% error rate:</p>
+
+<pre>1,000,000,000 items @ 1% false positive
+  = 9.59 bits per item
+  ≈ 1.2 GB</pre>
+
+  <h3>How that 1.2 GB is calculated</h3>
+  <p>We are not storing anything yet. We are just working out, before building the filter, <strong>how big the bit array has to be</strong> so that 1 billion items land at a 1% false positive rate.</p>
+<pre>INPUT    n = 1,000,000,000   items we expect to insert
+         p = 0.01            error rate we can live with
+              ↓
+OUTPUT   m = size of the bit array  →  the memory we must allocate</pre>
+
+  <h4>Step 1 — the formula</h4>
+  <div class="formula">
+    m = − ( n × ln p ) / ( ln 2 )²
+  </div>
+<pre>ln(0.01)  = −4.60517
+ln(2)     =  0.693147
+(ln 2)²   =  0.480453
+
+m = −(1,000,000,000 × −4.60517) / 0.480453
+  =   4,605,170,186 / 0.480453
+  =   9,585,058,377 bits</pre>
+
+  <h4>Step 2 — bits per item</h4>
+<pre>9,585,058,377 bits ÷ 1,000,000,000 items
+  = 9.5851 bits per item</pre>
+
+  <h4>Step 3 — bits → bytes → GB</h4>
+<pre>9,585,058,377 bits ÷ 8  =  1,198,132,297 bytes
+                        ≈  1.198 GB   →   ~1.2 GB</pre>
+
+  <h4>Why 9.59 does not depend on n</h4>
+  <p>Cancel <code>n</code> out of the formula and it disappears completely:</p>
+  <div class="formula">
+    bits per item = m / n = − ln p / ( ln 2 )²
+    <span class="sm">only the error rate is left</span>
+  </div>
+  <p>So <strong>bits-per-item is decided purely by the error rate you pick</strong>, never by how many items you have. 1% always costs 9.59 bits each, whether you store a thousand items or a billion — only the total scales. That is why one row of the sizing table covers every dataset size.</p>
+
+  <div class="note"><strong><code>ln</code> means natural log — base <code>e</code> (≈2.71828), not base 10.</strong> Handy for the code: in Java, Python, JavaScript and C, <code>Math.log()</code> / <code>math.log()</code> is <em>already</em> <code>ln</code>, so the formula translates directly. Mixing it up with <code>log₁₀</code> would size the filter about 5× too small. If your calculator only has <code>log</code>, convert with <code>ln(x) = log₁₀(x) × 2.3026</code>.</div>
+
+  <h3>And what is k?</h3>
+  <p>Sizing gave us <code>m</code>. The second thing every Bloom filter needs is <code>k</code>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Symbol</th><th>Means</th><th>In plain words</th><th>Our example</th></tr></thead>
+    <tbody>
+      <tr><td><code>n</code></td><td>Number of items</td><td>How many things you will insert</td><td>1,000,000,000</td></tr>
+      <tr><td><code>p</code></td><td>False positive rate</td><td>How often a wrong "yes" is acceptable</td><td>0.01 (1%)</td></tr>
+      <tr><td><code>m</code></td><td>Bit array size</td><td>The size of the whole board</td><td>9,585,058,377 bits</td></tr>
+      <tr><td><code>k</code></td><td>Hash functions</td><td><strong>How many bits each item marks</strong></td><td><strong>7</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>k</code> is simply <strong>how many hash functions you run per item</strong> — which is the same as how many bits get set on an insert, and how many bits get checked on a lookup.</p>
+
+<pre>With k = 3:
+
+  add("apple")
+     h1("apple") = 1   →  set bit 1
+     h2("apple") = 4   →  set bit 4     3 hash functions
+     h3("apple") = 7   →  set bit 7     = 3 bits marked
+
+  contains("apple")
+     check bits 1, 4, 7
+     all 1 → "probably present"
+     any 0 → "definitely not"</pre>
+
+  <p>So if <code>m</code> is the size of the board, <code>k</code> is how many squares each item stamps on it.</p>
+
+  <h4>How k is found — from m and n</h4>
+  <p>You do not pick <code>k</code> by feel. It comes straight out of <code>m</code> and <code>n</code>:</p>
+  <div class="formula">
+    k = ( m / n ) × ln 2
+    <span class="sm">m / n is just the bits-per-item we already computed</span>
+  </div>
+<pre>m / n  =  9,585,058,377 / 1,000,000,000  =  9.59 bits per item
+ln 2   =  0.693
+
+k = 9.59 × 0.693
+  = 6.64
+  → round to 7 hash functions</pre>
+
+  <h4>Why 7 — why not 1, why not 100?</h4>
+<pre>k = 1     only one bit to accidentally match
+          → collisions are easy → many false positives
+
+k = 100   every insert stamps 100 bits
+          → the array fills with 1s fast
+          → soon every lookup answers "probably present"
+
+k = 7     the balance point for this m/n</pre>
+  <p>The best <code>k</code> is the one that leaves the array <strong>about half 1s and half 0s</strong> — maximum information per bit. That is exactly what <code>(m/n) × ln2</code> produces.</p>
+
+  <div class="key"><b>The whole chain:</b>
+<pre style="margin:10px 0 0">you decide   n  and  p
+                ↓
+formula →       m      how much memory to allocate
+                ↓
+formula →       k      how many hash functions to run</pre></div>
+
+  <div class="note"><strong><code>k</code> is also your CPU cost.</strong> Every single lookup computes <code>k</code> bit positions and reads <code>k</code> places in memory. So <code>k = 7</code> is seven times the work of <code>k = 1</code> per operation — which is why section 15 notes that people sometimes round <em>down</em>. The accuracy curve is flat near the optimum, so <code>k = 6</code> is barely less accurate and measurably faster.</div>
+
+  <p class="xref">Section 13 covers the full set of formulas, and section 15 goes deeper on choosing <code>k</code>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Approach</th><th>Memory for 1B URLs</th><th>Accuracy</th><th>Lookup</th></tr></thead>
+    <tbody>
+      <tr><td>HashSet</td><td>~150 GB</td><td class="ok">Perfect</td><td>O(1)</td></tr>
+      <tr><td>Sorted file on disk + binary search</td><td>~60 GB disk</td><td class="ok">Perfect</td><td class="no">O(log n) disk seeks</td></tr>
+      <tr class="hlrow"><td><strong>Bloom filter (1%)</strong></td><td><strong>~1.2 GB</strong></td><td>1% false positives</td><td>O(k), k≈7</td></tr>
+      <tr><td>Bloom filter (10%)</td><td>~600 MB</td><td>10% false positives</td><td>O(k), k≈3</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="good"><strong>That is a 125× reduction.</strong> And notice what makes it possible: a Bloom filter <b>never stores the items themselves</b>. Not the URL, not a hash of the URL, nothing. It stores only a smear of bits. That is why the size depends on <em>how many</em> items you have, never on <em>how big</em> each item is. A 5-character username and a 2,000-character URL cost exactly the same.</div>
+</section>
+
+<section id="what">
+  <h2 class="sec"><span class="num">4</span> What a Bloom filter is</h2>
+
+  <div class="key"><b>One sentence:</b> a Bloom filter is a big array of bits plus a few hash functions, which can tell you <b>"definitely not present"</b> or <b>"probably present"</b> — and never the other way around.</div>
+
+  <p>Those two answers are the whole design, and the asymmetry is the point:</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Answer</th><th>Can you trust it?</th><th>What you do next</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>"Definitely NOT in the set"</strong></td>
+        <td class="ok">100% — always correct</td>
+        <td>Skip the expensive lookup entirely. This is where all the savings come from.</td>
+      </tr>
+      <tr>
+        <td><strong>"PROBABLY in the set"</strong></td>
+        <td class="no">Might be wrong</td>
+        <td>Go do the real lookup to confirm. Occasionally wasted work.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>So it is not a replacement for your database. It is a <strong>fast filter placed in front of it</strong> — a bouncer who can confidently turn people away but has to check the list before letting anyone in.</p>
+
+  <h4>The three defining properties</h4>
+  <ol>
+    <li><strong>No false negatives.</strong> If it says "not present", the item is genuinely absent. Guaranteed, always.</li>
+    <li><strong>False positives are possible.</strong> It may claim something is present when it is not. You control the rate when you size the filter.</li>
+    <li><strong>Space is fixed up front.</strong> You choose the size at creation. It does not grow as you add items — the error rate grows instead.</li>
+  </ol>
+</section>
+
+<section id="parts">
+  <h2 class="sec"><span class="num">5</span> The two ingredients</h2>
+
+  <h3>Ingredient 1 — a bit array of size m</h3>
+  <p>An array of <code>m</code> bits, every one starting at 0. That is the entire data structure. No keys, no values, no pointers.</p>
+  <div class="bitrow">
+    <div class="bit"><div class="v">0</div><div class="i">0</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">1</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">2</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">3</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">4</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">5</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">6</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">7</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">8</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">9</div></div>
+  </div>
+  <p class="legend">An empty filter with <code>m = 10</code>. Real ones have millions or billions of bits.</p>
+
+  <h3>Ingredient 2 — k independent hash functions</h3>
+  <p><code>k</code> different hash functions, each turning an item into a position in the array:</p>
+<pre>h1("apple") mod 10  =  1
+h2("apple") mod 10  =  4
+h3("apple") mod 10  =  7</pre>
+  <p>They must be <strong>independent</strong> — different functions giving unrelated answers — and <strong>uniform</strong>, spreading items evenly across the array. Weak or correlated hashes cluster the bits and wreck the error rate.</p>
+
+  <div class="note"><strong>Which hash functions?</strong> Not cryptographic ones like SHA-256 by default — you do not need security here, you need speed and good distribution. Real implementations use <strong>MurmurHash3</strong>, <strong>xxHash</strong>, or <strong>FNV</strong>. Section 16 shows how production code gets <code>k</code> hashes while only computing two.</div>
+</section>
+
+<section id="add">
+  <h2 class="sec"><span class="num">6</span> Adding an item — worked example</h2>
+  <p>Let's build one by hand. Settings: <code>m = 10</code> bits, <code>k = 3</code> hash functions.</p>
+
+  <h3>Step 1 — add "apple"</h3>
+<pre>h1("apple") = 1
+h2("apple") = 4
+h3("apple") = 7
+
+→ set bits 1, 4, 7 to 1</pre>
+  <div class="bitrow">
+    <div class="bit"><div class="v">0</div><div class="i">0</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">1</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">2</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">3</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">4</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">5</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">6</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">7</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">8</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">9</div></div>
+  </div>
+
+  <h3>Step 2 — add "banana"</h3>
+<pre>h1("banana") = 3
+h2("banana") = 4      ← already 1, stays 1
+h3("banana") = 9
+
+→ set bits 3, 4, 9 to 1</pre>
+  <div class="bitrow">
+    <div class="bit"><div class="v">0</div><div class="i">0</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">1</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">2</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">3</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">4</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">5</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">6</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">7</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">8</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">9</div></div>
+  </div>
+
+  <div class="key"><b>Notice bit 4.</b> Both "apple" and "banana" hash to it. The filter does not care and does not record that two items share it — it just holds a 1. <b>This sharing is the source of every false positive</b>, and also the reason the structure is so small. You will see it bite in section 8.</div>
+
+  <div class="note"><strong>Bits only ever go 0 → 1.</strong> Nothing is ever cleared during a normal add. That single fact explains no-false-negatives (section 9) and no-deletes (section 10). Keep it in mind.</div>
+</section>
+
+<section id="check">
+  <h2 class="sec"><span class="num">7</span> Checking an item — the two answers</h2>
+  <p>Checking uses the same hashes, then just reads instead of writing.</p>
+  <div class="formula">
+    If <span class="hl">ANY</span> of the k bits is 0  →  DEFINITELY NOT present
+    <br>If <span class="hl">ALL</span> k bits are 1  →  PROBABLY present
+  </div>
+
+  <h3>Case A — "cherry" (never added)</h3>
+<pre>h1("cherry") = 0   → bit 0 = 0   ✗ ZERO FOUND
+
+Stop immediately. Answer: DEFINITELY NOT PRESENT.</pre>
+  <div class="bitrow">
+    <div class="bit hit"><div class="v">0</div><div class="i">0</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">1</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">2</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">3</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">4</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">5</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">6</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">7</div></div>
+    <div class="bit"><div class="v">0</div><div class="i">8</div></div>
+    <div class="bit on"><div class="v">1</div><div class="i">9</div></div>
+  </div>
+  <p class="legend"><span class="chip c-hit">checked</span> Found a 0 at position 0 — done. No need to compute the other hashes.</p>
+
+  <h3>Case B — "apple" (was added)</h3>
+<pre>bit 1 = 1  ✓
+bit 4 = 1  ✓
+bit 7 = 1  ✓
+
+All ones. Answer: PROBABLY PRESENT.  (correct here)</pre>
+
+  <div class="good"><strong>The early exit matters.</strong> A negative answer usually costs less than <code>k</code> hashes — you bail the moment you see a zero. Since most real workloads are mostly negatives (most URLs are new, most usernames are free), the common case is also the cheapest case.</div>
+</section>
+
+<section id="fp">
+  <h2 class="sec"><span class="num">8</span> False positives — why they happen</h2>
+  <p>Same filter, still only "apple" and "banana" inside. Now check <strong>"grape"</strong>, which was never added:</p>
+<pre>h1("grape") = 1   → bit 1 = 1  ✓   (set by apple)
+h2("grape") = 3   → bit 3 = 1  ✓   (set by banana)
+h3("grape") = 7   → bit 7 = 1  ✓   (set by apple)
+
+All three bits are 1 → answer: PROBABLY PRESENT
+
+But "grape" was NEVER added. ← FALSE POSITIVE</pre>
+  <div class="bitrow">
+    <div class="bit fp"><div class="v">1</div><div class="i">1</div></div>
+    <div class="bit fp"><div class="v">1</div><div class="i">3</div></div>
+    <div class="bit fp"><div class="v">1</div><div class="i">7</div></div>
+  </div>
+  <p class="legend"><span class="chip c-fp">collision</span> Three bits, each set by a <em>different</em> item, together fake the presence of a third.</p>
+
+  <div class="key"><b>The mechanism:</b> no single item is to blame. "grape" was framed by a <b>combination</b> of bits that other items happened to set. The filter has no way to tell "these three 1s came from one item" apart from "these three 1s came from two other items". It never stored that information.</div>
+
+  <h3>What drives the rate up</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Factor</th><th>Effect on false positives</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>More items added (n ↑)</td><td class="no">Worse</td><td>More bits set to 1, so accidental all-ones is likelier</td></tr>
+      <tr><td>Bigger array (m ↑)</td><td class="ok">Better</td><td>Bits stay sparse, collisions rarer</td></tr>
+      <tr><td>More hashes (k ↑)</td><td>Both ways — see section 15</td><td>More bits to accidentally match, but also fills the array faster</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="bad"><strong>The failure mode to remember: saturation.</strong> Keep adding items and eventually most bits are 1. Once nearly every bit is 1, every query returns "probably present" and the filter is worthless — it never says no, so it never saves you anything. This is why you size for your expected <code>n</code> up front, and why an unbounded stream needs a scalable or rotating design (section 19).</div>
+</section>
+
+<section id="nofn">
+  <h2 class="sec"><span class="num">9</span> Why there are never false negatives</h2>
+  <p>This guarantee is what makes Bloom filters safe to use, and the proof is one line.</p>
+
+  <div class="formula">
+    Bits only go <span class="hl">0 → 1</span>. Never <span class="hl">1 → 0</span>.
+    <span class="sm">so a bit that was set stays set, forever</span>
+  </div>
+
+  <p>Walk it through:</p>
+<pre>You added "apple"     → bits 1, 4, 7 were set to 1
+Later you check "apple" → it hashes to the same bits 1, 4, 7
+                        → nothing could have reset them
+                        → all three are still 1
+                        → answer is "probably present"  ✓</pre>
+
+  <p>An added item is <strong>structurally incapable</strong> of returning "not present". Later additions can only set <em>more</em> bits, never clear one. There is no eviction, no expiry, no overwrite.</p>
+
+  <div class="good"><strong>Why this matters in design:</strong> a "no" is always trustworthy, so you can act on it without checking anything. That is the entire performance win. If false negatives were possible, you would have to verify every answer and the filter would be pointless.</div>
+
+  <div class="note"><strong>Interview trap.</strong> "Can a Bloom filter say an item is missing when it was added?" — <strong>No.</strong> Not rarely, not under load: never, by construction. If you ever design a variant that clears bits (naive deletion), you break this guarantee. That is exactly the next section.</div>
+</section>
+
+<section id="delete">
+  <h2 class="sec"><span class="num">10</span> Why you cannot delete</h2>
+  <p>Natural question: to remove an item, just set its bits back to 0? Watch what breaks.</p>
+
+<pre>Filter holds "apple" (bits 1,4,7) and "banana" (bits 3,4,9)
+
+Delete "apple" → clear bits 1, 4, 7
+
+Now check "banana":
+   bit 3 = 1  ✓
+   bit 4 = 0  ✗   ← we just cleared it, but banana needs it!
+   bit 9 = 1  ✓
+
+→ "DEFINITELY NOT PRESENT"
+
+But "banana" IS present. ← FALSE NEGATIVE. Guarantee broken.</pre>
+
+  <div class="bad"><strong>The root cause is shared bits.</strong> Bit 4 belonged to both items, and the filter never recorded who set it. Clearing it on apple's behalf silently corrupted banana. One deletion can quietly break an unbounded number of other items — and you get no error, just wrong answers forever after.</div>
+
+  <div class="key"><b>So: a standard Bloom filter supports exactly two operations — <code>add</code> and <code>contains</code>.</b> No delete, no update, no iterate, no size. If you need deletion, you need a different structure: a <b>Counting Bloom filter</b> or a <b>Cuckoo filter</b> (section 19).</div>
+</section>
+
+<section id="saturation">
+  <h2 class="sec"><span class="num">11</span> Saturation — when every bit is 1</h2>
+  <div class="oneline">🪫 "A filter that never says no is a filter that does nothing."</div>
+
+  <p>This is the failure mode that actually bites in production. A Bloom filter does not crash or return wrong negatives when it goes bad — it quietly stops being useful.</p>
+
+  <h3>The problem</h3>
+  <p>Bits only ever go 0 → 1. Keep adding items and the array fills up. Once nearly every bit is a 1, every lookup finds all its bits set:</p>
+<pre>Healthy filter (about half the bits set)
+  1 0 1 0 0 1 0 1 0 0 1 0 0 1 0 1
+  → checking an absent key usually lands on a 0
+  → "definitely not"  → you skip the expensive lookup  ✓
+
+Saturated filter
+  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+  → every key's bits are all 1
+  → "probably present"  → EVERY time, for EVERY key  ✗</pre>
+
+  <div class="bad"><strong>The filter now answers "probably present" to everything.</strong> It never says no, so you never skip a lookup, so it saves you nothing — while still costing memory, CPU for k hashes, and k cache misses on every request. It has become pure overhead. And nothing alerts you: the answers are still technically valid, just useless.</div>
+
+  <div class="good"><strong>Note what does <em>not</em> break.</strong> Even fully saturated, the filter never produces a false negative — it just stops producing true negatives. So you never get a <em>wrong</em> answer, only a worthless one. Correctness is safe; performance is gone.</div>
+
+  <h3>Two things cause it</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Cause</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Inserting more than you sized for</strong></td>
+        <td>You built the filter for <code>n</code> = 10M but inserted 100M. The array was never big enough; the error rate climbs far past your target <code>p</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Deleted items still holding bits</strong></td>
+        <td>An item removed from your database keeps its bits set forever, because you cannot clear them (section 10). Over time the filter guards a shrinking real dataset with an ever-growing set of bits.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+<pre>Designed for n = 1B, p = 1%
+
+  Inserted 1B, later deleted 300M
+    → only 700M items really exist
+    → but 1B items' worth of bits are still set
+
+  The filter is "full" for 1B while guarding only 700M.
+  Its useful accuracy is now worse than the 1% you designed for.</pre>
+
+  <h3>Detecting it before it hurts</h3>
+  <p>The fill ratio is the metric to watch — the fraction of bits set to 1:</p>
+  <div class="formula">
+    fill ratio = X / m
+    <span class="sm">X = bits currently set to 1, m = total bits</span>
+  </div>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Fill ratio</th><th>Meaning</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>~50%</td><td class="ok">Healthy — the designed operating point</td><td>Nothing</td></tr>
+      <tr><td>70–80%</td><td>Error rate drifting above target</td><td>Plan a rebuild or resize</td></tr>
+      <tr><td>&gt; 90%</td><td class="no">Effectively saturated</td><td>Rebuild now — the filter is not earning its keep</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>You can also estimate how many items are really in there and compare against the <code>n</code> you designed for:</p>
+<pre>n* ≈ −(m / k) × ln(1 − X/m)</pre>
+
+  <h3>The five options to avoid it</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Option</th><th>How it works</th><th>Best when</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Rebuild periodically</strong></td>
+        <td>Throw the filter away and rebuild it from the source of truth on a schedule — nightly, hourly, after every batch load.</td>
+        <td class="ok">The default answer. Simplest, most robust, no exotic structure. Use this unless you have a reason not to.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Size for the peak</strong></td>
+        <td>Compute <code>m</code> from the largest <code>n</code> the filter will ever hold, not today's count. Memory is linear in <code>n</code>, so over-provisioning is cheap.</td>
+        <td>You can predict the ceiling.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Counting Bloom filter</strong></td>
+        <td>Counters instead of bits, so deletes can safely decrement and free capacity back up.</td>
+        <td>Deletions are continuous and you cannot afford rebuilds. Costs ~4× memory.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Rotating / time-windowed filters</strong></td>
+        <td>Keep several filters, one per time window. Write to the newest, query all of them, drop the oldest as it ages out.</td>
+        <td>The question is naturally time-bounded — "seen in the last 24 hours", "shown this ad this week".</td>
+      </tr>
+      <tr>
+        <td><strong>5. Scalable Bloom filter</strong></td>
+        <td>When the current filter reaches its target error rate, chain on a new, larger one. Queries check every layer.</td>
+        <td>You genuinely cannot predict <code>n</code> in advance. Cost: lookups get slower as layers pile up.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="key"><b>The pattern behind all five:</b> a Bloom filter can never be <b>repaired</b>, because you cannot clear a bit without risking a false negative. So every real fix is some form of <b>replace it</b> — rebuild it, rotate it, or chain a fresh one beside it.</div>
+
+  <h3>How Cassandra sidesteps the problem entirely</h3>
+  <p>Cassandra never rebuilds a stale filter, because none of its filters ever go stale. The trick is one idea: <strong>it never edits a file, so it never has to edit a filter.</strong></p>
+
+  <h4>The key shift — what the filter is actually asked</h4>
+<pre>NOT:  "Does apple exist in the database?"
+BUT:  "Is apple inside THIS ONE FILE?"</pre>
+  <p>That second question can never go stale, because the file never changes. Once written, an SSTable is frozen forever — no edits, no deletes, no updates. Each SSTable gets its own small Bloom filter, built when the file is written.</p>
+
+  <h4>Step 1 — write apple</h4>
+<pre>SSTable-1  (frozen)        Filter-1
+  apple = red                apple → bits SET</pre>
+
+  <h4>Step 2 — delete apple</h4>
+  <p>Cassandra does <strong>not</strong> go back and erase it. It writes a <strong>tombstone</strong> — a marker meaning "deleted" — into a <strong>new</strong> file:</p>
+<pre>SSTable-1  (frozen)        Filter-1
+  apple = red                apple → SET     ← still correct!
+                                               apple IS in this file
+
+SSTable-2  (frozen)        Filter-2
+  apple = TOMBSTONE          apple → SET     ← also correct</pre>
+  <p>Both filters are still telling the truth. Filter-1 says "apple is in SSTable-1" — true, it is physically there. Filter-2 says "apple is in SSTable-2" — true, the tombstone is there. Nothing has gone stale, and no bit needed clearing.</p>
+
+  <h4>Step 3 — read apple</h4>
+<pre>Filter-2 says maybe → look in SSTable-2 → found TOMBSTONE
+                                        → answer: deleted ✓</pre>
+  <p>The newest file wins. Correct answer, and no filter was ever modified.</p>
+
+  <h4>Step 4 — compaction cleans up the bits</h4>
+  <p>Periodically Cassandra merges old files into a new one, dropping tombstoned rows:</p>
+<pre>SSTable-1 + SSTable-2
+        ↓  compaction
+SSTable-3          ← apple genuinely gone now
+Filter-3           ← built FROM SCRATCH over SSTable-3's real contents
+
+SSTable-1, SSTable-2, Filter-1, Filter-2  →  deleted entirely</pre>
+  <p>The old filters are not repaired — they are <strong>thrown away whole</strong>, along with their files. The new filter is freshly computed and perfectly accurate from birth.</p>
+
+  <div class="key"><b>The whole trick in one line:</b>
+<pre style="margin:10px 0 0">A Bloom filter can never be edited.
+So: never edit it. Only CREATE it and DESTROY it.</pre></div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th></th><th>Normal application usage</th><th>Cassandra</th></tr></thead>
+    <tbody>
+      <tr><td>Filter covers</td><td>the whole dataset (mutable)</td><td class="ok">one file (immutable)</td></tr>
+      <tr><td>On delete</td><td class="no">filter goes stale</td><td class="ok">nothing to change</td></tr>
+      <tr><td>Cleanup</td><td>rebuild the whole filter</td><td class="ok">old filter deleted with its file</td></tr>
+      <tr><td>Filter lifetime</td><td class="no">long-lived, slowly degrading</td><td class="ok">short-lived, always accurate</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="good"><strong>The lesson worth stealing:</strong> if you attach a Bloom filter to something that <b>never changes</b>, the staleness and saturation problems disappear on their own. If you must attach one to mutable data, plan the rebuild strategy up front — it is not an optimisation you can add later.</div>
+
+  <div class="note"><strong>Cassandra exposes the knob directly.</strong> Each table has a <code>bloom_filter_fp_chance</code> setting — the target false positive rate, defaulting to 0.01 for most compaction strategies. Lower it and Cassandra allocates more bits per SSTable; raise it to save memory. It is one of the few places you will set <code>p</code> by hand in a real system.</div>
+</section>
+
+<section id="growth">
+  <h2 class="sec"><span class="num">12</span> What if the item count grows?</h2>
+  <div class="oneline">📈 "You scale the database at peak. The Bloom filter cannot be scaled — it has to be rebuilt."</div>
+
+  <h3>First: more traffic is not more items</h3>
+<pre>Scaling DynamoDB / Redis  →  handles more REQUESTS per second
+Bloom filter size         →  depends on DISTINCT ITEMS only</pre>
+  <p>A traffic spike hitting the <em>same</em> 10M products does not affect the filter at all. It only grows when the number of distinct keys grows. Check which one is actually happening before doing anything.</p>
+
+  <h3>If the item count really grows — yes, you must rebuild</h3>
+  <p>You cannot resize in place, because every position depends on <code>m</code>:</p>
+<pre>slot = hash(key) mod m
+
+Change m → every key maps somewhere different
+        → every bit in the old array becomes meaningless</pre>
+  <p>And you cannot recompute the mapping, because the filter <strong>never stored the keys</strong>. There is nothing to re-hash — you have to rebuild from the source of truth.</p>
+
+  <h3>Good news: it degrades gradually, not suddenly</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Actual items</th><th>Error rate</th><th>Still useful?</th></tr></thead>
+    <tbody>
+      <tr><td>1× designed n</td><td>1.0%</td><td class="ok">Yes — as designed</td></tr>
+      <tr><td>1.5×</td><td>5.8%</td><td class="ok">Yes</td></tr>
+      <tr><td>2×</td><td>15.8%</td><td>Degraded but working</td></tr>
+      <tr><td>3×</td><td>43.6%</td><td>Marginal</td></tr>
+      <tr><td>5×</td><td>83.2%</td><td class="no">Nearly worthless</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>You are not on a cliff — you have time to notice and react. Alert on fill ratio at 70% and rebuild well before 2×.</p>
+
+  <h3>The practical answer: over-provision</h3>
+<pre>1B items @ 1%   →  1.2 GB
+size for 3B     →  3.6 GB     ← covers years of growth</pre>
+  <div class="good">Memory is <strong>linear</strong> in <code>n</code> and the base cost is tiny. Paying 3.6 GB instead of 1.2 GB to stop worrying is an obviously good trade — especially against the 150 GB HashSet you avoided. <strong>Size for your 2-year peak, not today's count.</strong></div>
+
+  <h3>How the rebuild works — with no downtime</h3>
+<pre>1. Keep serving from the OLD filter (still correct, just less accurate)
+2. Build a NEW filter with bigger m in the background,
+   scanning the source of truth
+3. Dual-write: new inserts go to BOTH filters while the build runs
+4. Atomic pointer swap → traffic now uses the new filter
+5. Free the old one</pre>
+  <p>Users see nothing. This is routine maintenance, not an emergency — which is why "rebuild periodically" is the default recommendation.</p>
+
+  <h3>If you genuinely cannot predict n</h3>
+  <ul>
+    <li><strong>Scalable Bloom filter</strong> — never rebuild, just chain a larger filter when the current one fills. Lookups check every layer, so they get slower over time.</li>
+    <li><strong>Rotating filters</strong> — if the question is time-bounded ("seen in the last 7 days"), drop the oldest window instead of growing.</li>
+  </ul>
+
+  <div class="key"><b>Rule of thumb:</b> size for your <b>2-year peak item count</b>, monitor the fill ratio, and rebuild offline with an atomic swap when you approach it. Over-provisioning is cheap; a Scalable Bloom filter is the fallback only when the ceiling is truly unknowable.</div>
+</section>
+
+<section id="math">
+  <h2 class="sec"><span class="num">13</span> The math — sizing formulas</h2>
+  <p>Four quantities, and you will be asked to relate them:</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Symbol</th><th>Meaning</th><th>Who decides it</th></tr></thead>
+    <tbody>
+      <tr><td><code>n</code></td><td>Number of items you expect to insert</td><td>Your workload</td></tr>
+      <tr><td><code>p</code></td><td>False positive rate you can tolerate</td><td>Your product requirement</td></tr>
+      <tr><td><code>m</code></td><td>Size of the bit array</td><td class="ok">Computed from n and p</td></tr>
+      <tr><td><code>k</code></td><td>Number of hash functions</td><td class="ok">Computed from m and n</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The two formulas to memorise</h3>
+  <div class="formula">
+    m = − ( n × ln p ) / ( ln 2 )²
+    <span class="sm">bits needed, given n items and target error rate p</span>
+    <br><br>
+    k = ( m / n ) × ln 2
+    <span class="sm">optimal number of hash functions ≈ 0.693 × bits-per-item</span>
+  </div>
+
+  <h3>And the one that predicts error</h3>
+  <div class="formula">
+    p ≈ ( 1 − e<sup>−kn/m</sup> )<sup>k</sup>
+    <span class="sm">the false positive rate you actually get</span>
+  </div>
+
+  <h4>Where that comes from, intuitively</h4>
+  <ol>
+    <li>One insertion sets <code>k</code> bits. After <code>n</code> insertions, <code>kn</code> bits have been set (with repeats).</li>
+    <li>The chance a specific bit is <em>still 0</em> is about <code>e^(−kn/m)</code>.</li>
+    <li>So the chance it is <em>1</em> is <code>1 − e^(−kn/m)</code>.</li>
+    <li>A false positive needs all <code>k</code> checked bits to be 1 → raise it to the power <code>k</code>.</li>
+  </ol>
+
+  <h3>Worked example — a crawler</h3>
+<pre>Requirement:  n = 100,000,000 URLs
+              p = 1% (0.01)
+
+m = −(100,000,000 × ln 0.01) / (ln 2)²
+  = −(100,000,000 × −4.605) / 0.4805
+  = 958,505,838 bits
+  = 119.8 MB          ← the whole filter
+
+k = (958,505,838 / 100,000,000) × 0.693
+  = 9.59 × 0.693
+  = 6.64  →  round to 7 hash functions</pre>
+
+  <div class="good"><strong>120 MB to track 100 million URLs.</strong> A HashSet of the same URLs would be roughly 15 GB. Same question answered, 1% of the time wastefully — for 0.8% of the memory.</div>
+
+  <div class="note"><strong>The shortcut worth memorising:</strong> <code>9.6 bits per item ≈ 1% error</code>, and roughly <strong>every extra 4.8 bits per item divides the error by 10</strong>. That one line lets you size any filter in your head during an interview.</div>
+</section>
+
+<section id="sizing">
+  <h2 class="sec"><span class="num">14</span> Sizing cheat sheet</h2>
+  <p>Memorise a couple of rows and you can answer sizing questions instantly. Note that <strong>bits-per-item does not depend on n</strong> — only on the error rate you pick.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>False positive rate</th><th>Bits / item</th><th>Optimal k</th><th>1M items</th><th>100M items</th><th>1B items</th></tr></thead>
+    <tbody>
+      <tr><td>50%</td><td>1.44</td><td>1</td><td>0.2 MB</td><td>18 MB</td><td>180 MB</td></tr>
+      <tr><td>10%</td><td>4.79</td><td>3</td><td>0.6 MB</td><td>60 MB</td><td>599 MB</td></tr>
+      <tr><td>5%</td><td>6.24</td><td>4</td><td>0.8 MB</td><td>78 MB</td><td>780 MB</td></tr>
+      <tr class="hlrow"><td><strong>1%</strong></td><td><strong>9.59</strong></td><td><strong>7</strong></td><td><strong>1.2 MB</strong></td><td><strong>120 MB</strong></td><td><strong>1.2 GB</strong></td></tr>
+      <tr><td>0.1%</td><td>14.38</td><td>10</td><td>1.8 MB</td><td>180 MB</td><td>1.8 GB</td></tr>
+      <tr><td>0.01%</td><td>19.17</td><td>13</td><td>2.4 MB</td><td>240 MB</td><td>2.4 GB</td></tr>
+      <tr><td>0.001%</td><td>23.96</td><td>17</td><td>3.0 MB</td><td>300 MB</td><td>3.0 GB</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="key"><b>The shape to notice:</b> going from 10% to 1% error costs about 5 extra bits per item. From 1% to 0.1%, another 5. Error falls <b>exponentially</b> while memory grows <b>linearly</b> — accuracy is cheap. But it never reaches zero, no matter how much memory you spend.</div>
+</section>
+
+<section id="k">
+  <h2 class="sec"><span class="num">15</span> Choosing k — the trade-off</h2>
+  <p>Why is there a "best" <code>k</code> rather than "more is better"? Because <code>k</code> pulls in two directions at once.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th></th><th>Helps</th><th>Hurts</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>k too small</strong> (e.g. 1)</td>
+        <td>Array stays sparse; each add sets few bits</td>
+        <td class="no">Only 1 bit to accidentally collide on → easy false positives</td>
+      </tr>
+      <tr>
+        <td><strong>k too large</strong> (e.g. 50)</td>
+        <td>Many bits must match at once</td>
+        <td class="no">Each add sets 50 bits → array saturates fast → everything matches</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>The sweet spot is where the array ends up <strong>about half full of 1s</strong> — maximum information per bit. That is exactly what <code>k = (m/n) × ln2</code> produces.</p>
+
+<pre>Filter sized for 1% error (9.59 bits/item):
+
+k = 1   →  p ≈ 9.9%     too few bits checked
+k = 3   →  p ≈ 2.3%
+k = 5   →  p ≈ 1.2%
+k = 7   →  p ≈ 1.0%     ← optimal
+k = 10  →  p ≈ 1.1%     saturating
+k = 20  →  p ≈ 3.4%     badly over-filled</pre>
+
+  <div class="note"><strong>The curve is flat near the bottom.</strong> k=6 or k=8 is barely worse than k=7. So in practice people round to a convenient integer and move on — and often deliberately choose a slightly <em>smaller</em> k, because every hash costs CPU on every single lookup. Trading a hair of accuracy for real speed is usually the right call.</div>
+
+  <div class="good"><strong>Interview-ready line:</strong> "k is optimal at <code>(m/n)·ln2</code>, which fills the array to about 50%. Too few hashes and collisions are easy; too many and you saturate the array. The curve is flat near the optimum, so I'd round down slightly to save CPU."</div>
+</section>
+
+<section id="real">
+  <h2 class="sec"><span class="num">16</span> How it is really implemented</h2>
+
+  <h3>You do not actually need k hash functions</h3>
+  <p>Writing 7 independent good hash functions would be painful and slow. Production implementations compute <strong>two</strong> and derive the rest — a result from Kirsch and Mitzenmacher showing this loses essentially no accuracy:</p>
+
+  <div class="formula">
+    g<sub>i</sub>(x) = ( h1(x) + i × h2(x) ) mod m
+    <span class="sm">for i = 0, 1, 2, … k−1</span>
+  </div>
+
+<pre>Compute one 128-bit MurmurHash3 of the key.
+Split it into two 64-bit halves → h1 and h2.
+Derive all k positions with cheap additions.
+
+Cost: 1 hash computation, not k.</pre>
+
+  <div class="note"><strong>Small but important detail:</strong> force <code>h2</code> to be odd (<code>h2 | 1</code>). If <code>h2</code> lands on a multiple of <code>m</code>, every derived position collapses to the same slot and your k-hash filter silently degenerates into a 1-hash filter.</div>
+
+  <h3>Bit storage</h3>
+  <p>You store bits packed into bytes, not as an array of booleans (which would waste 8× the space):</p>
+<pre>byte index  =  position / 8   →   position &gt;&gt; 3
+bit index   =  position % 8   →   position &amp; 7
+
+set bit     :  bytes[position &gt;&gt; 3] |= (1 &lt;&lt; (position &amp; 7))
+test bit    :  bytes[position &gt;&gt; 3] &amp;  (1 &lt;&lt; (position &amp; 7))</pre>
+
+  <h3>Complexity</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Operation</th><th>Time</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>add(x)</code></td><td>O(k)</td><td>Constant — k does not depend on n</td></tr>
+      <tr><td><code>contains(x)</code></td><td>O(k) worst, often less</td><td>Early exit on the first 0</td></tr>
+      <tr><td>Space</td><td>O(m)</td><td>Fixed at creation, independent of item size</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Since <code>k</code> is a small constant (typically 3–13), all operations are effectively <strong>O(1)</strong>.</p>
+
+  <div class="note"><strong>Cache behaviour is the hidden cost.</strong> The k positions are deliberately scattered across the array, so each lookup is k random memory accesses. On a multi-gigabyte filter that means k cache misses — often slower than the hashing itself. Some implementations use "blocked" Bloom filters that keep all k bits inside one cache line, trading a little accuracy for a large speed win.</div>
+</section>
+
+<section id="code">
+  <h2 class="sec"><span class="num">17</span> Working code</h2>
+  <p>A complete, correct Java implementation — this is roughly what you would write on a whiteboard.</p>
+
+  <h4>The full class</h4>
+<pre>import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+public class BloomFilter {
+
+    private final long[] bits;   // bit array, packed 64 bits per long
+    private final int    m;      // total number of bits
+    private final int    k;      // number of hash functions
+
+    /**
+     * @param n expected number of items
+     * @param p target false positive rate, e.g. 0.01 for 1%
+     */
+    public BloomFilter(int n, double p) {
+        // m = -(n * ln p) / (ln 2)^2
+        this.m = (int) Math.ceil(-(n * Math.log(p)) / (Math.log(2) * Math.log(2)));
+
+        // k = (m / n) * ln 2
+        this.k = Math.max(1, (int) Math.round(((double) m / n) * Math.log(2)));
+
+        this.bits = new long[(m + 63) / 64];
+    }
+
+    /** Set the k bits for this key. Bits only ever go 0 -&gt; 1. */
+    public void add(String key) {
+        long[] h = hash(key);
+        for (int i = 0; i &lt; k; i++) {
+            int s = slot(h[0], h[1], i);
+            bits[s &gt;&gt;&gt; 6] |= 1L &lt;&lt; (s &amp; 63);
+        }
+    }
+
+    /** false = DEFINITELY absent.  true = PROBABLY present. */
+    public boolean mightContain(String key) {
+        long[] h = hash(key);
+        for (int i = 0; i &lt; k; i++) {
+            int s = slot(h[0], h[1], i);
+            if ((bits[s &gt;&gt;&gt; 6] &amp; (1L &lt;&lt; (s &amp; 63))) == 0) {
+                return false;          // early exit on the first zero
+            }
+        }
+        return true;
+    }
+
+    /** Double hashing: derive k positions from just two hashes. */
+    private int slot(long h1, long h2, int i) {
+        return (int) Math.floorMod(h1 + (long) i * h2, m);
+    }
+
+    /** One digest, split into two 64-bit halves. */
+    private long[] hash(String key) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(key.getBytes(StandardCharsets.UTF_8));
+            ByteBuffer buf = ByteBuffer.wrap(digest);
+            long h1 = buf.getLong();
+            long h2 = buf.getLong() | 1L;   // force odd, see note below
+            return new long[]{h1, h2};
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public int bitCount()      { return m; }
+    public int hashCount()     { return k; }
+    public double sizeInMB()   { return m / 8.0 / 1_000_000; }
+}</pre>
+
+  <h4>Using it</h4>
+<pre>public static void main(String[] args) {
+    BloomFilter bf = new BloomFilter(1_000_000, 0.01);
+
+    System.out.println(bf.bitCount());   // 9585059 bits
+    System.out.println(bf.hashCount());  // 7 hash functions
+    System.out.println(bf.sizeInMB());   // ~1.2 MB
+
+    bf.add("charan@example.com");
+
+    bf.mightContain("charan@example.com");  // true  - definitely added
+    bf.mightContain("nobody@example.com");  // false - definitely absent
+                                            //         (99% of the time)
+}</pre>
+
+  <h3>Three details worth explaining out loud</h3>
+
+  <div class="note"><strong>1. Why <code>| 1L</code> on the second hash.</strong> Double hashing derives every position from <code>h1 + i·h2</code>. If <code>h2</code> happens to be a multiple of <code>m</code>, every derived position collapses onto the same slot and your 7-hash filter silently degenerates into a 1-hash filter. Forcing <code>h2</code> odd rules that out.</div>
+
+  <div class="note"><strong>2. Why <code>Math.floorMod</code> and not <code>%</code>.</strong> Java's <code>%</code> keeps the sign of the left operand, so a negative hash gives a negative index and an <code>ArrayIndexOutOfBoundsException</code>. <code>floorMod</code> always returns a non-negative result. This is a genuine bug people ship.</div>
+
+  <div class="note"><strong>3. Why the method is called <code>mightContain</code>, not <code>contains</code>.</strong> The name carries the contract. Guava names it the same way for exactly this reason — it forces the caller to remember that <code>true</code> still needs confirming, while <code>false</code> is final.</div>
+
+  <h3>Bit packing, if asked</h3>
+<pre>bits is long[], so 64 bits live in each array element.
+
+  array index  =  s / 64   -&gt;   s &gt;&gt;&gt; 6
+  bit offset   =  s % 64   -&gt;   s &amp; 63
+
+  set   :  bits[s &gt;&gt;&gt; 6] |=  (1L &lt;&lt; (s &amp; 63))
+  test  :  bits[s &gt;&gt;&gt; 6] &amp;   (1L &lt;&lt; (s &amp; 63))  != 0
+
+A boolean[] would cost one BYTE per bit - 8x the memory
+for the same information. Never use boolean[] here.</pre>
+
+  <h4>In production — use Guava</h4>
+<pre>import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
+
+BloomFilter&lt;String&gt; bf = BloomFilter.create(
+        Funnels.stringFunnel(StandardCharsets.UTF_8),
+        1_000_000,      // expected insertions
+        0.01);          // false positive rate
+
+bf.put("charan@example.com");
+bf.mightContain("charan@example.com");   // true
+
+// Guava also supports exact union of two compatible filters:
+bf.putAll(otherFilter);</pre>
+
+  <div class="good"><strong>Write it from scratch in the interview, use a library everywhere else.</strong> Guava's <code>BloomFilter</code> (Java), <code>pybloom-live</code> (Python), or <strong>RedisBloom</strong> when many services need to share one filter. Guava uses MurmurHash3 rather than SHA-256 — faster, and cryptographic strength buys you nothing here.</div>
+</section>
+
+<section id="ops">
+  <h2 class="sec"><span class="num">18</span> What you can and cannot do</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Operation</th><th>Supported?</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><code>add(x)</code></td><td class="ok">Yes</td><td>O(k)</td></tr>
+      <tr><td><code>contains(x)</code></td><td class="ok">Yes</td><td>O(k), with the "probably" caveat</td></tr>
+      <tr><td><code>delete(x)</code></td><td class="no">No</td><td>Breaks the no-false-negative guarantee. Use Counting Bloom or Cuckoo.</td></tr>
+      <tr><td>List all items</td><td class="no">No</td><td>The items were never stored — only bits</td></tr>
+      <tr><td>Exact count of items</td><td class="no">No</td><td>But you can <em>estimate</em> — see below</td></tr>
+      <tr><td><strong>Union</strong> of two filters</td><td class="ok">Yes — exact</td><td>Bitwise <code>OR</code>. Result is identical to a filter built from both sets.</td></tr>
+      <tr><td><strong>Intersection</strong></td><td>Approximate</td><td>Bitwise <code>AND</code> works but inflates the error rate beyond the formula</td></tr>
+      <tr><td>Resize / grow</td><td class="no">No</td><td>Must rebuild from the original data, or use a Scalable Bloom filter</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note"><strong>Union is a genuinely useful property.</strong> Both filters must have the same <code>m</code> and <code>k</code>, then <code>OR</code> them. This is how distributed systems merge filters built independently on different machines — each node builds its own, and a coordinator ORs them into a global view. Cheap, exact, no re-reading the data.</div>
+
+  <h4>Estimating how many items are in a filter</h4>
+<pre>n* ≈ −(m / k) × ln(1 − X/m)
+
+where X = number of bits currently set to 1</pre>
+  <p>Useful for monitoring: track <code>n*</code> against the <code>n</code> you designed for, and alert before the filter saturates and its error rate blows past your target.</p>
+</section>
+
+<section id="variants">
+  <h2 class="sec"><span class="num">19</span> Variants</h2>
+  <p>Each variant fixes one specific limitation. Knowing which to reach for is a strong interview signal.</p>
+
+  <h3>Counting Bloom filter — adds deletion</h3>
+  <p>Replace each bit with a small counter (usually 4 bits).</p>
+<pre>add(x)      →  increment the k counters
+delete(x)   →  decrement the k counters
+contains(x) →  all k counters &gt; 0 ?
+
+Bit 4 shared by apple and banana:
+   after both adds        → counter = 2
+   after deleting apple   → counter = 1   ← banana still safe ✓</pre>
+  <div class="note"><strong>Cost: 4× the memory</strong> (4 bits instead of 1 per slot). Counters can also overflow at 15 — once saturated they typically stop decrementing, which slowly reintroduces false positives.</div>
+
+  <h3>Scalable Bloom filter — handles unknown n</h3>
+  <p>When you cannot predict how many items are coming. Start with one filter; when it hits its target error rate, add a new, larger one with a tighter error target. Queries check every layer.</p>
+<pre>contains(x) = filter1.contains(x)
+           OR filter2.contains(x)
+           OR filter3.contains(x)  ...</pre>
+  <p>Error rates are chosen as a shrinking geometric series so the total stays bounded. Cost: lookups get slower as layers accumulate.</p>
+
+  <h3>Cuckoo filter — deletion, and usually smaller</h3>
+  <p>Stores short fingerprints in a cuckoo hash table instead of raw bits.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th></th><th>Bloom</th><th>Cuckoo</th></tr></thead>
+    <tbody>
+      <tr><td>Delete</td><td class="no">No</td><td class="ok">Yes</td></tr>
+      <tr><td>Space at low error rates (&lt;3%)</td><td>Larger</td><td class="ok">~Smaller</td></tr>
+      <tr><td>Lookup cache behaviour</td><td>k scattered accesses</td><td class="ok">2 locations</td></tr>
+      <tr><td>Insert failure possible</td><td class="ok">Never</td><td class="no">Yes, when table is full</td></tr>
+      <tr><td>Simplicity</td><td class="ok">Very simple</td><td>More complex</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="good"><strong>Good interview move:</strong> when asked "what if we need deletes?", answer <em>Counting Bloom filter, or a Cuckoo filter if space matters — Cuckoo also gives better cache locality, at the cost of possible insert failure when it fills up.</em></div>
+
+  <h3>Others worth naming</h3>
+  <ul>
+    <li><strong>Blocked Bloom filter</strong> — confines all k bits to one cache line. Much faster, slightly worse error rate.</li>
+    <li><strong>Partitioned Bloom filter</strong> — each hash function owns its own slice of the array. Simpler analysis, marginally different error behaviour.</li>
+    <li><strong>Quotient filter</strong> — cache-friendly, supports deletes and merging, can be resized.</li>
+    <li><strong>Ribbon / XOR filter</strong> — modern, near-optimal space for static sets you never modify after building.</li>
+  </ul>
+</section>
+
+<section id="cousins">
+  <h2 class="sec"><span class="num">20</span> Bloom vs HyperLogLog vs Count-Min</h2>
+  <p>Interviewers love mixing these up to see if you actually understand them. They are all probabilistic and small, but they answer <strong>three different questions</strong>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Structure</th><th>Question it answers</th><th>Typical size</th><th>Example use</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Bloom filter</strong></td>
+        <td>"Is X in the set?"<br><em>membership</em></td>
+        <td>~1.2 GB / 1B items @1%</td>
+        <td>Have I crawled this URL?</td>
+      </tr>
+      <tr>
+        <td><strong>HyperLogLog</strong></td>
+        <td>"How many <em>distinct</em> items?"<br><em>cardinality</em></td>
+        <td>~12 KB for billions</td>
+        <td>How many unique visitors today?</td>
+      </tr>
+      <tr>
+        <td><strong>Count-Min Sketch</strong></td>
+        <td>"How many times did X appear?"<br><em>frequency</em></td>
+        <td>~KBs to MBs</td>
+        <td>Which are the top trending searches?</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="key"><b>The one-liner to keep straight:</b> Bloom = <b>is it there</b>, HyperLogLog = <b>how many different</b>, Count-Min = <b>how often</b>. All three trade exactness for enormous space savings, but they are not interchangeable — a Bloom filter cannot count, and a HyperLogLog cannot tell you whether any specific item was seen.</div>
+</section>
+
+<section id="world">
+  <h2 class="sec"><span class="num">21</span> Real systems that use it</h2>
+
+  <h3>Databases — skipping disk reads</h3>
+  <p>The classic use, and the one most worth quoting. <strong>Cassandra, HBase, LevelDB, RocksDB, Bigtable</strong> all store data in immutable files (SSTables). A read might have to check many of them.</p>
+<pre>Without a Bloom filter:
+  read key → check SSTable 1 (disk seek) ✗
+           → check SSTable 2 (disk seek) ✗
+           → check SSTable 3 (disk seek) ✓
+  3 disk seeks
+
+With a per-SSTable Bloom filter (kept in RAM):
+  read key → filter 1 says NO   → skip, no disk touched
+           → filter 2 says NO   → skip, no disk touched
+           → filter 3 says MAYBE → 1 disk seek ✓
+  1 disk seek</pre>
+  <div class="good">A false positive costs one wasted disk seek — annoying but harmless. A false <em>negative</em> would mean losing data, which is precisely why the no-false-negative guarantee is what makes this design legal.</div>
+
+  <h3>Cache penetration defence</h3>
+  <p>An attacker requests keys that do not exist. Every request misses the cache and slams the database.</p>
+<pre>Request key → Bloom filter of all valid keys
+                ├─ "definitely not"  → return 404 immediately, DB untouched
+                └─ "probably"        → check cache, then DB</pre>
+  <p>Redis ships <strong>RedisBloom</strong> specifically for this, so many app servers can share one filter.</p>
+
+  <h3>Other well-known deployments</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>System</th><th>What it filters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Chrome (historically)</strong></td><td>Safe Browsing — is this URL malicious? A local filter avoids a network call for the 99.9% of safe URLs</td></tr>
+      <tr><td><strong>Web crawlers</strong></td><td>Have I already visited this URL? Prevents infinite loops and duplicate work</td></tr>
+      <tr><td><strong>Medium</strong></td><td>Has this reader already seen this article? Keeps recommendations fresh</td></tr>
+      <tr><td><strong>CDNs (Akamai)</strong></td><td>"One-hit wonders" — do not waste cache space on a URL until it has been requested twice</td></tr>
+      <tr><td><strong>Bitcoin (SPV wallets)</strong></td><td>Request only relevant transactions without revealing exactly which addresses you own</td></tr>
+      <tr><td><strong>Ethereum</strong></td><td>Log/event bloom filters in block headers, so light clients can skip irrelevant blocks</td></tr>
+      <tr><td><strong>Password checkers</strong></td><td>Is this password in a known breach list? Ships a small filter instead of 800M passwords</td></tr>
+      <tr><td><strong>Spell checkers</strong></td><td>The original 1970 use case — is this word in the dictionary?</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="playbook">
+  <h2 class="sec"><span class="num">22</span> Interview playbook</h2>
+
+  <h3>When to bring it up unprompted</h3>
+  <p>Mentioning a Bloom filter at the right moment is a strong signal. Reach for it whenever you see this shape:</p>
+  <div class="key"><b>The trigger pattern:</b> a <b>very frequent</b> membership check, against a <b>very large</b> set, where a <b>"no" lets you skip expensive work</b>, and an occasional false "yes" is merely wasteful rather than incorrect.</div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Design question</th><th>Where the Bloom filter goes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Web crawler</strong></td><td>Dedupe seen URLs across billions of pages</td></tr>
+      <tr><td><strong>URL shortener</strong></td><td>Is this custom alias already taken? Avoids a DB hit per keystroke</td></tr>
+      <tr><td><strong>News feed / recommendations</strong></td><td>Filter out articles this user already saw</td></tr>
+      <tr><td><strong>Key-value store</strong></td><td>Per-SSTable filter to skip disk reads</td></tr>
+      <tr><td><strong>Ad serving</strong></td><td>Frequency capping — has this user seen this creative?</td></tr>
+      <tr><td><strong>Distributed cache</strong></td><td>Cache-penetration guard against nonexistent keys</td></tr>
+      <tr><td><strong>Email / spam</strong></td><td>Is this sender on a known blocklist?</td></tr>
+      <tr><td><strong>Payment dedup</strong></td><td>Have I already processed this transaction id? <em>(with a real check behind it)</em></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>How to present it in 30 seconds</h3>
+  <div class="good">
+    "I'd put a Bloom filter in front of the datastore. It's a bit array plus k hash functions — for each key we set k bits on insert and check those k bits on lookup. If any bit is 0 the key is <strong>definitely</strong> absent, so we skip the lookup entirely; if all are 1 it's <em>probably</em> present and we do the real read to confirm.
+    <br><br>
+    For 100 million keys at a 1% false positive rate that's about 9.6 bits per key — roughly 120 MB, versus ~15 GB for a HashSet. We never get false negatives, so we can never wrongly skip a key that exists. The trade-off is we can't delete from it, so if entries need removal I'd use a Counting Bloom filter or rebuild it periodically."
+  </div>
+
+  <h3>The three things that impress</h3>
+  <ol>
+    <li><strong>State the guarantee direction correctly and explain why it matters.</strong> "No false negatives" is not trivia — it is what makes skipping work safe.</li>
+    <li><strong>Do the sizing out loud.</strong> "~10 bits per item for 1%" turns a vague suggestion into a concrete design.</li>
+    <li><strong>Volunteer the limitation before you are asked.</strong> Naming the no-delete problem and its fix shows you have actually used one.</li>
+  </ol>
+</section>
+
+<section id="qa">
+  <h2 class="sec"><span class="num">23</span> Common interview questions</h2>
+
+  <div class="ask"><span class="q">Q: Can a Bloom filter produce a false negative?</span>
+  No — never, by construction. Bits only change from 0 to 1, so a bit set when an item was added can never be cleared. Checking that item later must find all its bits set. False <em>positives</em> are possible; false negatives are not.</div>
+
+  <div class="ask"><span class="q">Q: Why can't you delete an item?</span>
+  Bits are shared between items. Clearing an item's k bits could clear a bit another item depends on, which would make that other item report "not present" — a false negative. Fix: Counting Bloom filter (counters instead of bits) or a Cuckoo filter.</div>
+
+  <div class="ask"><span class="q">Q: How much memory for 1 billion items at 1% error?</span>
+  About <strong>1.2 GB</strong>. The formula is <code>m = −n·ln(p) / (ln2)²</code>, which works out to 9.59 bits per item at 1% — and bits-per-item depends only on the error rate, never on how large each item is.</div>
+
+  <div class="ask"><span class="q">Q: What happens if you add far more items than you sized for?</span>
+  The filter saturates. More and more bits become 1, the false positive rate climbs toward 100%, and eventually every query answers "probably present" — at which point the filter saves you nothing. It never returns wrong negatives, it just stops being useful. Fix: size for peak n, monitor the fill ratio, or use a Scalable Bloom filter.</div>
+
+  <div class="ask"><span class="q">Q: How do you pick the number of hash functions?</span>
+  <code>k = (m/n)·ln2</code>, which fills roughly half the array with 1s. Too few hashes means too few bits to collide on; too many saturates the array. The curve is flat near the optimum, so rounding down slightly to save CPU is a reasonable production choice.</div>
+
+  <div class="ask"><span class="q">Q: Do the hash functions need to be cryptographic?</span>
+  No. You need speed and uniform distribution, not collision resistance. MurmurHash3 or xxHash are typical. In practice you compute one 128-bit hash, split it into two halves, and derive all k positions as <code>h1 + i·h2</code>.</div>
+
+  <div class="ask"><span class="q">Q: How would you use one in a distributed system?</span>
+  Two options. <strong>Partition</strong> — shard by key so each node owns a filter for its own key range, matching your data partitioning. Or <strong>replicate</strong> — each node holds a full copy, since filters are small and mergeable: two filters with the same m and k can be combined exactly with a bitwise OR. For a shared mutable filter, RedisBloom gives you one that many services can hit.</div>
+
+  <div class="ask"><span class="q">Q: Bloom filter or HyperLogLog?</span>
+  Different questions. Bloom answers "is <em>this specific item</em> in the set?" HyperLogLog answers "how many <em>distinct</em> items are there?" and cannot tell you anything about a particular item. Unique-visitor <em>count</em> → HyperLogLog. "Has <em>this</em> visitor been here?" → Bloom.</div>
+
+  <div class="ask"><span class="q">Q: A false positive means we do a wasted DB lookup. Is that acceptable?</span>
+  Almost always, and you should quantify it. At 1%, one in a hundred negative lookups does unnecessary work — you have still eliminated 99% of them. The one case where it is <em>not</em> acceptable is when a false positive causes an incorrect <em>action</em> rather than wasted work. "Have I already processed this payment?" must never skip a real payment on a false positive, so the filter can only be a fast pre-check in front of an authoritative confirmation.</div>
+
+  <div class="ask"><span class="q">Q: How do you handle a filter that needs to reflect deletions over time?</span>
+  Three practical answers: (1) Counting Bloom filter, if deletions are ongoing. (2) Rebuild periodically from the source of truth — often the simplest and most robust choice for a batch pipeline. (3) Rotating filters — keep two or more time-windowed filters and drop the oldest, which works well for "seen in the last 24 hours" style questions.</div>
+
+  <div class="ask"><span class="q">Q: Can you resize a Bloom filter?</span>
+  Not in place — the hash positions depend on <code>m</code>, so changing <code>m</code> invalidates everything already stored. You rebuild from the original data, or use a Scalable Bloom filter that chains progressively larger filters and queries all of them.</div>
+</section>
+
+<section id="gotchas">
+  <h2 class="sec"><span class="num">24</span> Gotchas that catch people out</h2>
+
+  <div class="bad"><strong>1. Getting the guarantee backwards.</strong> The single most common mistake. It is "no false negatives, some false positives". Say it the wrong way round and the interview effectively ends there.</div>
+
+  <div class="note"><strong>2. Sizing for today's n, not the peak.</strong> The filter cannot grow. Size for the largest number of items it will ever hold, or plan the rebuild/rotation strategy up front.</div>
+
+  <div class="note"><strong>3. Weak or correlated hash functions.</strong> Using <code>hashCode()</code> and <code>hashCode() * 31</code> as your "two independent hashes" gives correlated positions and an error rate far worse than the formula predicts. The formula assumes genuine independence.</div>
+
+  <div class="note"><strong>4. Forgetting the confirming read.</strong> A "probably present" is not a yes. Any code path that treats it as one is a bug waiting to happen — and interviewers do probe this.</div>
+
+  <div class="note"><strong>5. Using it where a false positive is dangerous.</strong> Wasted work is fine. Skipping a real payment, dropping a real message, or denying a legitimate signup is not. Ask what the false positive actually <em>causes</em> before choosing a Bloom filter.</div>
+
+  <div class="note"><strong>6. Concurrency assumptions.</strong> Concurrent <code>add</code>s are naturally benign because bits only turn on — but only if writes are atomic at the word level. Non-atomic read-modify-write on a shared byte can lose a set bit, which <em>does</em> create a false negative. Use atomic operations on shared filters.</div>
+
+  <div class="note"><strong>7. Ignoring cache misses.</strong> On a multi-gigabyte filter, k scattered lookups mean k cache misses, which typically dominates the hashing cost. If throughput matters, mention blocked Bloom filters.</div>
+</section>
+
+<section id="cheat">
+  <h2 class="sec"><span class="num">25</span> One-page cheat sheet</h2>
+
+<pre>WHAT
+  Bit array (size m) + k hash functions.
+  Answers set membership. Never stores the items themselves.
+
+ADD(x)
+  Set the k bits at h1(x) … hk(x) to 1.
+
+CONTAINS(x)
+  ANY bit 0  → DEFINITELY NOT present   (always correct)
+  ALL bits 1 → PROBABLY present         (may be wrong)
+
+GUARANTEE
+  ✓ No false negatives  — ever
+  ✗ False positives     — at a rate you choose
+
+SIZING
+  m = −n·ln(p) / (ln2)²        bits needed
+  k = (m/n)·ln2                optimal hash count
+  p ≈ (1 − e^(−kn/m))^k        resulting error rate
+
+RULE OF THUMB
+  ~10 bits per item  →  1% false positives, k = 7
+  +5 bits per item   →  error rate ÷ 10
+
+  1% error:   1M → 1.2 MB    100M → 120 MB    1B → 1.2 GB
+
+COMPLEXITY
+  add / contains : O(k) ≈ O(1)
+  space          : O(m), independent of item size
+
+CANNOT
+  delete · list items · count exactly · resize in place
+
+CAN
+  union (bitwise OR, exact) · estimate n · merge across machines
+
+VARIANTS
+  need deletes        → Counting Bloom / Cuckoo
+  unknown item count  → Scalable Bloom
+  need speed          → Blocked Bloom
+  static set          → XOR / Ribbon filter
+
+NOT THE SAME AS
+  HyperLogLog   → how many distinct?
+  Count-Min     → how often?
+
+USED BY
+  Cassandra · HBase · RocksDB · LevelDB · Bigtable
+  Chrome Safe Browsing · CDNs · crawlers · RedisBloom</pre>
+
+  <div class="key"><b>If you remember only three things:</b><br>
+  1. "Definitely not" is always true; "probably yes" needs confirming.<br>
+  2. ~10 bits per item buys a 1% error rate — roughly 100× smaller than storing the data.<br>
+  3. You cannot delete, because bits are shared — and that is why Counting and Cuckoo filters exist.</div>
+</section>
+
+<footer>Bloom Filters · system design reference · from first principles to interview answers</footer>
+</div>
+</body>
+</html>

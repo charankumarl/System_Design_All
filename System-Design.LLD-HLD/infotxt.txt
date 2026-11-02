@@ -1,3 +1,0 @@
-	
-	
-	1. PARKING LOT : https://github.com/amit2197kumar/Low-Level-Designs/blob/master/Code/Parking%20Lot%20LLD.java
