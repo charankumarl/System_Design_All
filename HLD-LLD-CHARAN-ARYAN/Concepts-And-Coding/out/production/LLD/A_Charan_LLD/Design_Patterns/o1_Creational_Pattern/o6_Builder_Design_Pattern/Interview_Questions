@@ -1,0 +1,59 @@
+1. What is the Builder Pattern?
+
+The Builder Pattern is a creational design pattern used to construct complex objects step by step. It allows us to create an
+object with multiple optional parameters in a readable and flexible way.
+
+2. Why Use the Builder Pattern?
+
+Problem with Telescoping Constructor
+When a class has multiple attributes, using multiple constructors (constructor overloading) becomes cumbersome.
+ Drawback → Too many overloaded constructors make the code hard to maintain.
+
+3. When to Use the Builder Pattern?
+
+   When a class has many optional parameters.
+   When you want to make an immutable class.
+   When multiple constructors become hard to maintain.
+
+4. What is this keyword return means ?
+
+the this keyword refers to the current instance of CarBuilder
+
+The build() method creates a new Car object.
+The Car constructor (private Car(CarBuilder builder)) expects a CarBuilder object as a parameter.
+The this keyword inside build() refers to the current instance of CarBuilder.
+This allows the Car class to access all the fields set in the CarBuilder and use them to initialize its attributes.
+
+5. What is returning this keyword. Is it required?
+
+returning this is required in this method to allow method chaining in the Builder Pattern.
+
+1️⃣ Enables method chaining
+If we don't return this, chaining multiple builder methods won't work.
+2️⃣ Keeps the builder pattern fluent and readable
+
+If we don't return this, we would have to call methods separately:
+
+Builder builder = new Builder();
+builder.addAirbags();
+builder.setSunroof(true);
+Car carDeepCopy = builder.build();
+-----------------------------------------------------------------------------------------------------------------------
+
+5️⃣ What is method chaining in the Builder Pattern?
+Returning this in each method allows chaining multiple method calls, making the code more readable.
+
+6️⃣ Why do we use a static inner class for the Builder?
+It helps in creating the Builder independently without requiring an instance of the outer class.
+Encapsulates object creation within the same class.
+
+7️⃣ What is the role of the build() method?
+The build() method creates and returns the final object.
+It ensures immutability by only setting values once before returning the object.
+
+8️⃣ What are the advantages of the Builder Pattern?
+✅ Better readability with method chaining.
+✅ Avoids telescoping constructors (constructors with too many parameters).
+✅ Immutable objects (once built, the object cannot be changed).
+✅ More flexible than factory methods.
+

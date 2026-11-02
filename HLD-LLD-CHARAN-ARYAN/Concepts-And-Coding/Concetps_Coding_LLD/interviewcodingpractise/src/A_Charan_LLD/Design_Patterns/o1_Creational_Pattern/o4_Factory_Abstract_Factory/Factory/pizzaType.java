@@ -1,0 +1,7 @@
+package A_Charan_LLD.Design_Patterns.o1_Creational_Pattern.o4_Factory_Abstract_Factory.Factory;
+
+public enum pizzaType {
+
+    VEG,
+    NON_VEG;
+}

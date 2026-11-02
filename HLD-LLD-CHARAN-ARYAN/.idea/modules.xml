@@ -93,6 +93,11 @@
       <module fileurl="file://$PROJECT_DIR$/CWA-LowLevelDesignCode/07_LLD_Interview_Problems/11_Design_Splitwise/11_Design_Splitwise.iml" filepath="$PROJECT_DIR$/CWA-LowLevelDesignCode/07_LLD_Interview_Problems/11_Design_Splitwise/11_Design_Splitwise.iml" />
       <module fileurl="file://$PROJECT_DIR$/CWA-LowLevelDesignCode/07_LLD_Interview_Problems/12_Design_ATM_Machine/12_Design_ATM_Machine.iml" filepath="$PROJECT_DIR$/CWA-LowLevelDesignCode/07_LLD_Interview_Problems/12_Design_ATM_Machine/12_Design_ATM_Machine.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/System-Design-Aryan.iml" filepath="$PROJECT_DIR$/.idea/System-Design-Aryan.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Concepts-And-Coding/LLD.iml" filepath="$PROJECT_DIR$/Concepts-And-Coding/LLD.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/solutions/solutions.iml" filepath="$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/solutions/solutions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/design-patterns/java/design-patterns.iml" filepath="$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/design-patterns/java/design-patterns.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/design-patterns/java/factory/factory.iml" filepath="$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/design-patterns/java/factory/factory.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/design-patterns/java/composite/composite.iml" filepath="$PROJECT_DIR$/Aweson-System-Design-LLD-HLD/design-patterns/java/composite/composite.iml" />
     </modules>
   </component>
 </project>

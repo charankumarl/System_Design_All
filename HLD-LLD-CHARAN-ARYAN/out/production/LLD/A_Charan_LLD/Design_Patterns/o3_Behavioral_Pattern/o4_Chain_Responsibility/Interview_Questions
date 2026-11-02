@@ -1,0 +1,49 @@
+1. What is the Chain of Responsibility pattern?
+
+The Chain of Responsibility is a behavioral design pattern that allows multiple handlers to process a request sequentially.
+If one handler cannot process the request, it passes it to the next handler in the chain. This pattern helps decouple senders and receivers.
+
+Allows multiple object to handlers a request without sender needing to know which object will ultimately process it.
+
+2. What are the key components of the Chain of Responsibility pattern?
+
+Handler (Abstract Class or Interface) – Defines an interface for handling requests and stores a reference to the next handler.
+
+Concrete Handlers (Subclasses) – Implement request handling logic and decide whether to process the request or pass it to the next handler.
+
+Client – Creates the chain and initiates request processing.
+
+3. What problem does the Chain of Responsibility pattern solve?
+
+It avoids tight coupling between the sender and the receiver by allowing multiple objects to process a request.
+ It also eliminates long if-else or switch statements, making the system more modular and flexible.
+
+ 9. Can Chain of Responsibility be implemented using Java's built-in features?
+
+ Yes! Java's javax.servlet.FilterChain and java.util.logging.Logger use the Chain of Responsibility pattern.
+
+ Example:
+
+ In Servlet Filters, each filter processes the request and can either modify it or pass it to the next filter.
+ In Logging Frameworks, log messages pass through different handlers (console, file, email).
+
+13. How can you make the Chain of Responsibility pattern more efficient?
+
+✅ Use short-circuiting – If a handler processes the request, stop passing it to the next handler.
+✅ Implement lazy evaluation – Create handlers only when they are needed.
+✅ Use caching – If handlers perform expensive computations, store results for reuse
+
+15. What are some real-life use cases of the Chain of Responsibility pattern?
+
+📌 Logging Frameworks (Log4j, SLF4J) – Logs are passed through different handlers.
+📌 Servlet Filters – Filters process HTTP requests sequentially.
+📌 ATM Withdrawal – ATM processes money withdrawals using different denominations.
+📌 Event Handling in UI – Mouse and keyboard events pass through UI elements.
+📌 Middleware in Web Frameworks – Requests pass through multiple middlewares.
+------------------------------------------------------------------------------------------------------------------------------
+
+-> Where all we need to use the CHAIN OF RESPONSIBILTY pattern?
+
+    1. ATM
+    2. Vendor Machine
+    3. Logging Frameworks

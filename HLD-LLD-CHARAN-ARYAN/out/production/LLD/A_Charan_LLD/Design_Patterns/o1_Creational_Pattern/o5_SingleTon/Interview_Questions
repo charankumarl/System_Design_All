@@ -1,0 +1,102 @@
+1. What is the Singleton Pattern?
+
+The Singleton Pattern ensures that only one instance of a class is created and provides a global access point to that instance.
+ It is useful for database connections, logging, caching, and configurations.
+
+3. Why is the constructor private in Singleton?
+
+The constructor is private to prevent direct instantiation of the class from outside, ensuring that only one instance is created
+via getInstance().
+
+4. What are the problems with a simple Singleton implementation?
+
+A simple Singleton may have issues like:
+
+Thread safety issues in multithreaded environments.
+Serialization problems where deserialization can create a new instance.
+Reflection API can be used to break Singleton.
+
+5. How do you make Singleton thread-safe?
+
+Use synchronized getInstance() (but has performance overhead).
+Use Double-Checked Locking to minimize synchronization.
+Use Bill Pugh Singleton with static nested class (best approach).
+Use Enum Singleton (100% safe).
+
+
+6. Can we break Singleton using Reflection? How to prevent it?
+
+Yes! Reflection can break Singleton by calling the private constructor like this:
+
+Constructor<Singleton> constructor = Singleton.class.getDeclaredConstructor();
+constructor.setAccessible(true);
+Singleton instance2 = constructor.newInstance();  // Creates a new instance
+
+10. When should we NOT use Singleton Pattern?
+
+Avoid Singleton when:
+
+Object is not globally required.
+Unit testing is needed (Singleton makes testing harder).
+It leads to hidden dependencies in the code
+
+
+11 .How is this Double-Checked Locking?
+    In the given Double-Checked Locking Singleton implementation, we check for null twice before creating the instance.
+    Here’s the breakdown:
+
+    Why Two Checks?
+    First Check (Outside synchronized)
+
+    Before entering the synchronized block, we check if (instance == null).
+    This helps avoid unnecessary locking, improving performance.
+
+    Second Check (Inside synchronized)
+
+    Once inside the synchronized block, we check again if instance is null.
+    This prevents multiple threads from creating separate instances in a multi-threaded environment.
+
+    What If We Remove the First Check?
+
+    If we remove the first if (instance == null), every thread will enter the synchronized block, causing performance degradation.
+    This defeats the purpose of lazy initialization while maintaining thread safety.
+
+    Why Use volatile?
+    The volatile keyword ensures that all threads see the latest value of instance and prevents partial object creation
+    due to instruction reordering.
+
+ -------------------------------------------------------------------------------------------------------------------------------
+
+ 11. What is Reflection API:
+
+ The Reflection API in Java allows you to inspect, analyze, and manipulate classes, methods, fields, and constructors at runtime,
+ even if you don't know their names at compile time.
+
+ 12. What is ?
+
+    Class<T> is a generic class that represents a class or interface at runtime.
+    ? means "any type" (unknown generic type).
+    This allows clazz to hold a Class reference for any type, without knowing the exact type at compile-time.
+
+  13. How to Prevent Reflection from Breaking Singleton
+
+      We can throw an exception inside the constructor if it is already initialized.
+      private Singleton() {
+              if (instance != null) {
+                  throw new RuntimeException("Use getInstance() to create an object");
+              }
+          }
+
+  14. Why Bill Pugh Is Used?
+
+    Lazy Initialization:
+
+    The instance is created lazily, meaning that it is created only when the getInstance() method is called for the first time.
+    This is an advantage over other methods (like using synchronized blocks in a regular singleton) because we avoid unnecessary
+    overhead if the instance is never actually needed.
+
+    No Performance Overhead After Initialization:
+
+    Unlike the Double-Checked Locking pattern (which requires synchronization every time the instance is accessed),
+    the Bill Pugh Singleton avoids any synchronization mechanisms, resulting in better performance after the first instance creation.
+    Once the instance is created, subsequent calls to getInstance() are highly efficient since no locking is required.

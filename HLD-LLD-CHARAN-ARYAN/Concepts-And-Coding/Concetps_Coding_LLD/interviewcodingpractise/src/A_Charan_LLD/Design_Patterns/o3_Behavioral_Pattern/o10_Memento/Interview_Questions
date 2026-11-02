@@ -1,0 +1,42 @@
+1. What is Memento Pattern ?
+
+The Memento Pattern is a behavioral design pattern that allows an object to save and restore its previous state without
+violating encapsulation. It is particularly useful in undo/redo operations.
+
+Example Use Case :
+
+Imagine a text editor where users can undo and redo their typing. The Memento Pattern allows us to save snapshots of the text at
+different points and restore them when needed.
+
+2. Components of Memento Pattern
+
+The Memento Pattern consists of three main components:
+
+Originator → The object whose state needs to be saved and restored.   TEXT EDITOR
+Memento → The object storing the previous state.                      MEMENTO
+Caretaker → Manages and keeps track of mementos.                      HISTORY
+
+3. Implementation of Memento Pattern in Java
+
+Let's implement a Text Editor with Undo Feature using the Memento Pattern.
+
+Step 1: Create the Memento Class
+The Memento stores the state of the Originator.
+
+Step 2: Create the Originator Class
+The Originator is the main object that can create mementos of its state and restore from them.
+
+Step 3: Create the Caretaker Class
+The Caretaker stores multiple mementos and allows undo operations.
+-------------------------------------------------------------------------------------------------
+
+6. When to Use the Memento Pattern?
+
+Undo/Redo functionality (e.g., text editors, graphic editors, document history).
+Checkpoint and restore operations (e.g., games that allow saving progress).
+State-based rollback in applications (e.g., databases, transactions).
+
+Text editors (undo/redo).
+Version control systems (Git commits).
+Game save states.
+Database rollback operations.

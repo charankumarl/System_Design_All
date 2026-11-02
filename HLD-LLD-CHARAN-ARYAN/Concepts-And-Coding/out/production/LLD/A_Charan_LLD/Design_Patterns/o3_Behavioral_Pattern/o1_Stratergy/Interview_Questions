@@ -1,0 +1,26 @@
+1. What is the Strategy Pattern?
+
+The Strategy Pattern is a behavioral design pattern that defines a family of algorithms, encapsulates each one, and
+makes them interchangeable.
+It allows the client to choose the algorithm at runtime without changing the client code.
+
+2. When should you use the Strategy Pattern?
+
+Use the Strategy Pattern when:
+
+You have multiple algorithms for a task and want to switch between them dynamically.
+You want to avoid if-else or switch-case statements for selecting an algorithm.
+You need to encapsulate behaviors and make them interchangeable.
+
+Example use cases:
+
+Sorting algorithms (Bubble Sort, Quick Sort, Merge Sort).
+Payment methods (Credit Card, PayPal, Bitcoin).
+Compression algorithms (ZIP, RAR, TAR).
+
+3. What are the main components of the Strategy Pattern?
+
+Strategy (Interface) – Defines the contract for different strategies (algorithms).
+Concrete Strategies – Implement different variations of the algorithm.
+Context – Maintains a reference to a strategy and allows switching strategies dynamically.
+

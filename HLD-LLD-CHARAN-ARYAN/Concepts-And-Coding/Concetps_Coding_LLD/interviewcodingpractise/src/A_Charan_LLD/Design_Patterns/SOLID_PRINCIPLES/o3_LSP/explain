@@ -1,0 +1,32 @@
+1. Suupose if we have parent object, then all the class extends parents should have override this method.
+
+    ex: Class Bird -> fly() method and eat() method.
+
+        1. Peigon  extends Bird-> as both fly() and eat() method is applicable.
+
+        2. Sparrow extends Bird-> dont have fly() method, since sparrow cant fly. only have eat() method.
+
+
+    -> Now if i do,  bird b = new Sparrow();
+            b.fly();  -> it will give runtime exception.    because sparrow dont have fly method.
+
+    -> According to LSP -> Child class should be replaceable with parent class without affecting the functionality of the program.
+
+
+
+    -> Soln :   Create a seperate Interface -> Flyabble.
+
+        1. Get fly method () from Bird and Add it to Flyabble interface.
+
+        2. Now sparrow exteds Bird and dont implement Flyabble interface.
+
+        3. Peigon extends Bird and implements Flyabble interface.
+
+    -> Now Bird have only eat() method.
+
+        Bird b = new Sparrow();
+            b.eat();  -> it will work fine.   b.fly(),  we dont have it.
+
+        Sparrow s = new Sparrow();
+            s.eat();  -> it will work fine.     Follow LSP
+            s.fly()  -> not support.

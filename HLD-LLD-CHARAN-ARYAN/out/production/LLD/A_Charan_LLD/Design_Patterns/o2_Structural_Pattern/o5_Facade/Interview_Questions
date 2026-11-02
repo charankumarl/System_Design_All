@@ -1,0 +1,28 @@
+1. What is the Facade Design Pattern?
+
+Exposed only insert method to client
+
+Hided the remaining methods from client. Delete and Update.
+
+Facade is used to hide the complexity of the system and provide an interface to the client using which the
+ client can access the system.
+
+We hide the some parts of the system from the client and expose only the required part to the client.
+
+2️⃣ When should you use the Facade Pattern?
+Answer:
+Use the Facade Pattern when:
+✔️ You have a complex system with multiple interdependent classes.
+✔️ You want to simplify interactions with that system.
+✔️ You need to decouple the client code from complex subsystems.
+✔️ You want to provide a clear and consistent interface.
+
+💡 Example: In a banking application, a BankFacade class can provide simple methods like withdraw(amount) and
+deposit(amount), instead of exposing multiple classes like Account, Transaction, SecurityCheck, etc.
+
+
+8️⃣ What are the drawbacks of using the Facade Pattern?
+
+❌ Tight Coupling: The Facade becomes a central access point to all subsystems.
+❌ Performance Overhead: If the Facade does too much, it may slow down operations.
+❌ Limited Flexibility: Advanced users may need direct access to the subsystems.

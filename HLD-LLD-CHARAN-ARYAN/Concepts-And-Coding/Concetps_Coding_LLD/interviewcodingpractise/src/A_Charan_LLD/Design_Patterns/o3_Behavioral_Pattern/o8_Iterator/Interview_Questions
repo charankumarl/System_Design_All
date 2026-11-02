@@ -1,0 +1,53 @@
+1. What is the Iterator Pattern?
+
+The Iterator Pattern is a behavioral design pattern that provides a way to access elements of a collection sequentially without
+exposing its underlying representation. It allows iteration over a collection while maintaining encapsulation.
+
+2. Why do we use the Iterator Pattern?
+
+The Iterator Pattern is used for:
+
+Providing a uniform way to iterate through different types of collections.
+Decoupling iteration logic from the collection implementation.
+Allowing multiple ways to traverse a collection.
+Hiding the internal structure of a collection.
+
+3. What are the main components of the Iterator Pattern?
+
+The Iterator Pattern consists of:
+
+Iterator Interface – Defines methods like hasNext() and next().
+Concrete Iterator – Implements the iterator interface for a specific collection.
+Collection Interface – Declares a method to return an iterator.
+Concrete Collection – Implements the collection interface and stores elements.
+
+4. Can we iterate multiple times using the same iterator?
+
+No. Once an iterator reaches the end of the collection, it cannot be reset. You need to create a new iterator instance to iterate again.
+
+8. What is the difference between Iterator and ListIterator?
+
+Feature	Iterator	                                                            ListIterator
+Traversal	Forward only	                                    Both forward and backward
+Methods	hasNext(), next(), remove()	                            hasNext(), next(), hasPrevious(), previous(), add(), set()
+Applicable On	All Collection implementations	                    Only List implementations
+
+9. Can we modify a collection while iterating using an Iterator?
+
+No. If we try to modify a collection while iterating (using methods like add() or remove() on the collection), it throws a
+ConcurrentModificationException.
+
+However, we can use the Iterator's remove() method to safely remove elements while iterating.
+
+10. How does the fail-fast property work in Java Iterators?
+
+The fail-fast property means that if a collection is modified structurally while iterating, the iterator throws a ConcurrentModificationException.
+This happens because the iterator detects unexpected modifications.
+
+11. How can we avoid ConcurrentModificationException while iterating?
+
+To avoid this exception:
+
+Use Iterator's remove() method instead of list.remove().
+Use CopyOnWriteArrayList (modifications are done on a separate copy).
+Use synchronized collections if working in a multi-threaded environment.

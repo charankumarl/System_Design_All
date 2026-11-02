@@ -1,0 +1,36 @@
+1. What is the Decorator Pattern?
+
+The Decorator Pattern is a structural design pattern that allows adding new functionality to objects dynamically without
+modifying their structure. It achieves this by wrapping objects inside decorator classes that extend their behavior.
+
+2. Why do we use the Decorator Pattern instead of subclassing?
+
+Subclassing leads to a class explosion problem when many combinations of features are required.
+For example, if we have:
+
+Coffee
+MilkCoffee
+SugarMilkCoffee
+WhippedCreamMilkSugarCoffee
+
+The number of subclasses grows exponentially. The Decorator Pattern solves this by dynamically adding features without
+creating multiple subclasses.
+
+3. How does the Decorator Pattern follow the Open-Closed Principle?
+
+The Open-Closed Principle (OCP) states that a class should be open for extension but closed for modification.
+
+In the Decorator Pattern, we extend behavior using decorators without modifying the original class.
+New decorators can be added without changing existing classes, making it OCP-compliant.
+
+4. Bridge and Decorator :
+
+Why They Are Not the Same?
+✅ Bridge focuses on STRUCTURE:
+
+If you have n Coffee Types and m Brewing Methods, you don’t need n × m classes.
+Example: Espresso can work with French Press, Drip, or Espresso Machine without needing separate subclasses.
+✅ Decorator focuses on DYNAMIC BEHAVIOR:
+
+You start with a Coffee and add features (Milk, Sugar, Cream) dynamically without modifying the base class.
+Instead of creating subclasses like LatteWithMilkAndSugar, decorators wrap the coffee object.
