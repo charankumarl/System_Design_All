@@ -12,8 +12,8 @@ const (
 )
 
 type LibraryManager struct {
-	catalog map[string]*Book
-	members map[string]*Member
+	catalog map[string]*mdel.Book
+	members map[string]*mdel.Member
 	mu      sync.RWMutex
 }
 
@@ -25,14 +25,14 @@ var (
 func GetLibraryManager() *LibraryManager {
 	once.Do(func() {
 		instance = &LibraryManager{
-			catalog: make(map[string]*Book),
-			members: make(map[string]*Member),
+			catalog: make(map[string]*mdel.Book),
+			members: make(map[string]*mdel.Member),
 		}
 	})
 	return instance
 }
 
-func (lm *LibraryManager) AddBook(book *Book) {
+func (lm *LibraryManager) AddBook(book *mdel.Book) {
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
 	lm.catalog[book.ISBN] = book
@@ -44,13 +44,13 @@ func (lm *LibraryManager) RemoveBook(isbn string) {
 	delete(lm.catalog, isbn)
 }
 
-func (lm *LibraryManager) GetBook(isbn string) *Book {
+func (lm *LibraryManager) GetBook(isbn string) *mdel.Book {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
 	return lm.catalog[isbn]
 }
 
-func (lm *LibraryManager) RegisterMember(member *Member) {
+func (lm *LibraryManager) RegisterMember(member *mdel.Member) {
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
 	lm.members[member.MemberID] = member
@@ -62,7 +62,7 @@ func (lm *LibraryManager) UnregisterMember(memberID string) {
 	delete(lm.members, memberID)
 }
 
-func (lm *LibraryManager) GetMember(memberID string) *Member {
+func (lm *LibraryManager) GetMember(memberID string) *mdel.Member {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
 	return lm.members[memberID]
@@ -89,7 +89,7 @@ func (lm *LibraryManager) BorrowBook(memberID, isbn string) error {
 
 	member.BorrowBook(book)
 	book.SetAvailable(false)
-	fmt.Printf("Book borrowed: %s by %s\n", book.Title, member.Name)
+	fmt.Printf("mdel.Book borrowed: %s by %s\n", book.Title, member.Name)
 	return nil
 }
 
@@ -106,16 +106,16 @@ func (lm *LibraryManager) ReturnBook(memberID, isbn string) error {
 
 	member.ReturnBook(book)
 	book.SetAvailable(true)
-	fmt.Printf("Book returned: %s by %s\n", book.Title, member.Name)
+	fmt.Printf("mdel.Book returned: %s by %s\n", book.Title, member.Name)
 	return nil
 }
 
-func (lm *LibraryManager) SearchBooks(keyword string) []*Book {
+func (lm *LibraryManager) SearchBooks(keyword string) []*mdel.Book {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
 
 	keyword = strings.ToLower(keyword)
-	matchingBooks := make([]*Book, 0)
+	matchingBooks := make([]*mdel.Book, 0)
 
 	for _, book := range lm.catalog {
 		if strings.Contains(strings.ToLower(book.Title), keyword) ||

@@ -69,7 +69,7 @@ ConcertTicketBookingSystem system = new ConcertTicketBookingSystem();
 // Add a concert
 Concert concert = system.addConcert("Rock Concert", "2024-12-31", "Stadium");
 
-// Book a seat
+// mdel.Book a seat
 User user = new User("John Doe", "john@example.com");
 Booking booking = system.bookSeat(concert, "A1", user);
 

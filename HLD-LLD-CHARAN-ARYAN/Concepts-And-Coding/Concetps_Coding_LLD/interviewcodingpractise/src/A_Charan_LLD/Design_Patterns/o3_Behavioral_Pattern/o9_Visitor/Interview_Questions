@@ -3,7 +3,7 @@
 The Visitor Pattern is a behavioral design pattern that allows adding new operations to a class structure without modifying the existing classes.
 Instead, we define new operations in a separate Visitor class.
 
-When discount changes everytime, Book or Electronoics class should not be modified.
+When discount changes everytime, mdel.Book or Electronoics class should not be modified.
 
 2. What problem does the Visitor Pattern solve?
 
@@ -15,4 +15,4 @@ Summary
 Visitor Pattern allows adding new operations without modifying existing classes.
 We use accept() method in elements to pass visitors.
 The visitor contains operations for each concrete element type.
-Example: Shopping Cart with Book and Electronics, applying discounts and tax calculations.
+Example: Shopping Cart with mdel.Book and Electronics, applying discounts and tax calculations.

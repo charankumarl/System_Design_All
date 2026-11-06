@@ -2,14 +2,14 @@
 #include <iostream>
 #include <iomanip>
 
-Transaction::Transaction(std::string transactionId, Book* book, Member* member,
+Transaction::Transaction(std::string transactionId, mdel.Book* book, mdel.Member* member,
                        TransactionType type, std::string issueDate, std::string dueDate)
     : transactionId(transactionId), book(book), member(member), type(type),
       issueDate(issueDate), dueDate(dueDate), fine(0.0) {}
 
 std::string Transaction::getTransactionId() const { return transactionId; }
-Book* Transaction::getBook() const { return book; }
-Member* Transaction::getMember() const { return member; }
+mdel.Book* Transaction::getBook() const { return book; }
+mdel.Member* Transaction::getMember() const { return member; }
 TransactionType Transaction::getType() const { return type; }
 std::string Transaction::getIssueDate() const { return issueDate; }
 std::string Transaction::getDueDate() const { return dueDate; }
@@ -27,8 +27,8 @@ void Transaction::setFine(double amount) {
 void Transaction::displayInfo() const {
     std::cout << "\nTransaction Details:" << std::endl;
     std::cout << "Transaction ID: " << transactionId << std::endl;
-    std::cout << "Book: " << book->getTitle() << std::endl;
-    std::cout << "Member: " << member->getName() << std::endl;
+    std::cout << "mdel.Book: " << book->getTitle() << std::endl;
+    std::cout << "mdel.Member: " << member->getName() << std::endl;
     std::cout << "Type: ";
     switch (type) {
         case TransactionType::BORROW: std::cout << "Borrow"; break;

@@ -9,18 +9,18 @@ LibraryManager::~LibraryManager() {
     for (auto transaction : transactions) delete transaction;
 }
 
-void LibraryManager::addBook(Book* book) {
+void LibraryManager::addBook(mdel.Book* book) {
     books.push_back(book);
 }
 
-void LibraryManager::addMember(Member* member) {
+void LibraryManager::addMember(mdel.Member* member) {
     members.push_back(member);
 }
 
 bool LibraryManager::borrowBook(std::string memberId, std::string bookId,
                               std::string issueDate, std::string dueDate) {
-    Member* member = findMember(memberId);
-    Book* book = findBook(bookId);
+    mdel.Member* member = findMember(memberId);
+    mdel.Book* book = findBook(bookId);
     
     if (!member || !member->isActive() || !book || 
         book->getStatus() != BookStatus::AVAILABLE) {
@@ -44,8 +44,8 @@ bool LibraryManager::borrowBook(std::string memberId, std::string bookId,
 
 bool LibraryManager::returnBook(std::string memberId, std::string bookId,
                               std::string returnDate) {
-    Member* member = findMember(memberId);
-    Book* book = findBook(bookId);
+    mdel.Member* member = findMember(memberId);
+    mdel.Book* book = findBook(bookId);
     Transaction* transaction = findTransaction(bookId, memberId);
     
     if (!member || !book || !transaction || 
@@ -72,8 +72,8 @@ bool LibraryManager::returnBook(std::string memberId, std::string bookId,
 }
 
 bool LibraryManager::reserveBook(std::string memberId, std::string bookId) {
-    Member* member = findMember(memberId);
-    Book* book = findBook(bookId);
+    mdel.Member* member = findMember(memberId);
+    mdel.Book* book = findBook(bookId);
     
     if (!member || !member->isActive() || !book || 
         book->getStatus() != BookStatus::AVAILABLE) {
@@ -95,8 +95,8 @@ bool LibraryManager::reserveBook(std::string memberId, std::string bookId) {
 
 bool LibraryManager::renewBook(std::string memberId, std::string bookId,
                              std::string newDueDate) {
-    Member* member = findMember(memberId);
-    Book* book = findBook(bookId);
+    mdel.Member* member = findMember(memberId);
+    mdel.Book* book = findBook(bookId);
     Transaction* transaction = findTransaction(bookId, memberId);
     
     if (!member || !book || !transaction || 
@@ -127,7 +127,7 @@ void LibraryManager::displayAvailableBooks() const {
 }
 
 void LibraryManager::displayMemberBooks(std::string memberId) const {
-    Member* member = findMember(memberId);
+    mdel.Member* member = findMember(memberId);
     if (!member) return;
     
     std::cout << "\nBooks borrowed by " << member->getName() << ":" << std::endl;
@@ -153,14 +153,14 @@ void LibraryManager::displayTransactionHistory() const {
     }
 }
 
-Book* LibraryManager::findBook(const std::string& bookId) const {
+mdel.Book* LibraryManager::findBook(const std::string& bookId) const {
     for (auto book : books) {
         if (book->getBookId() == bookId) return book;
     }
     return nullptr;
 }
 
-Member* LibraryManager::findMember(const std::string& memberId) const {
+mdel.Member* LibraryManager::findMember(const std::string& memberId) const {
     for (auto member : members) {
         if (member->getMemberId() == memberId) return member;
     }

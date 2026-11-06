@@ -65,9 +65,9 @@ func (bs *ConcertTicketBookingSystem) BookTickets(user *User, concert *Concert, 
 		}
 	}
 
-	// Book seats
+	// mdel.Book seats
 	for _, seat := range seats {
-		if err := seat.Book(); err != nil {
+		if err := seat.mdel.Book(); err != nil {
 			// Rollback previous bookings
 			for _, s := range seats {
 				if s == seat {

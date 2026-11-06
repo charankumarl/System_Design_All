@@ -3,14 +3,14 @@
 
 #include <vector>
 #include <string>
-#include "Book.hpp"
-#include "Member.hpp"
+#include "mdel.Book.hpp"
+#include "mdel.Member.hpp"
 #include "Transaction.hpp"
 
 class LibraryManager {
 private:
-    std::vector<Book*> books;
-    std::vector<Member*> members;
+    std::vector<mdel.Book*> books;
+    std::vector<mdel.Member*> members;
     std::vector<Transaction*> transactions;
     int transactionIdCounter;
 
@@ -18,8 +18,8 @@ public:
     LibraryManager();
     ~LibraryManager();
     
-    void addBook(Book* book);
-    void addMember(Member* member);
+    void addBook(mdel.Book* book);
+    void addMember(mdel.Member* member);
     
     bool borrowBook(std::string memberId, std::string bookId,
                    std::string issueDate, std::string dueDate);
@@ -35,8 +35,8 @@ public:
     void displayTransactionHistory() const;
     
 private:
-    Book* findBook(const std::string& bookId) const;
-    Member* findMember(const std::string& memberId) const;
+    mdel.Book* findBook(const std::string& bookId) const;
+    mdel.Member* findMember(const std::string& memberId) const;
     Transaction* findTransaction(const std::string& bookId,
                                const std::string& memberId) const;
     std::string generateTransactionId();

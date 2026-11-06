@@ -17,4 +17,9 @@ public class BigImage implements Image {
     public void display() {
         System.out.println("Displaying: " + fileName);
     }
+
+    /**
+     * Se if user create object, then we are loading it from disck, and if user dont call display(), then no use of loading it and spending so much
+     * memory and CPU.
+     */
 }

@@ -2,18 +2,18 @@ package iterator
 
 // BookCollection represents a collection of books
 type BookCollection struct {
-	books []*Book
+	books []*mdel.Book
 }
 
 // NewBookCollection creates a new BookCollection instance
 func NewBookCollection() *BookCollection {
 	return &BookCollection{
-		books: make([]*Book, 0),
+		books: make([]*mdel.Book, 0),
 	}
 }
 
 // AddBook adds a book to the collection
-func (bc *BookCollection) AddBook(book *Book) {
+func (bc *BookCollection) AddBook(book *mdel.Book) {
 	bc.books = append(bc.books, book)
 }
 

@@ -22,7 +22,7 @@ func NewRoom(id string, roomType RoomType, price float64) *Room {
 	}
 }
 
-func (r *Room) Book() error {
+func (r *Room) mdel.Book() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

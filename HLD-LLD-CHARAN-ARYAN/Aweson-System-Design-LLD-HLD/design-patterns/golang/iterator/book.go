@@ -1,14 +1,14 @@
 package iterator
 
-// Book represents a book with title and author
-type Book struct {
+// mdel.Book represents a book with title and author
+type mdel.Book struct {
 	Title  string
 	Author string
 }
 
-// NewBook creates a new Book instance
-func NewBook(title, author string) *Book {
-	return &Book{
+// NewBook creates a new mdel.Book instance
+func NewBook(title, author string) *mdel.Book {
+	return &mdel.Book{
 		Title:  title,
 		Author: author,
 	}

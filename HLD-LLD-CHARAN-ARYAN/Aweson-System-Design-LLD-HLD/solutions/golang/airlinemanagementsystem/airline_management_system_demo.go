@@ -73,7 +73,7 @@ func Run() {
 	// Create seat
 	seat := NewSeat("25A", SeatTypeEconomy)
 
-	// Book a flight
+	// mdel.Book a flight
 	booking := system.BookFlight(flight1, passenger1, seat, 100.0)
 	if booking != nil {
 		fmt.Printf("Booking successful. Booking ID: %s\n", booking.BookingNumber)

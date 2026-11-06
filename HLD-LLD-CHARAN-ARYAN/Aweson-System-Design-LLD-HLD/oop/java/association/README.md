@@ -145,11 +145,11 @@ Associations can be **unidirectional** (one object knows about another) or **bid
 ```java
 import java.util.*;
 
-class Book {
+class mdel.Book {
     private String title;
     private Library library;
     
-    public Book(String title, Library library) {
+    public mdel.Book(String title, Library library) {
         this.title = title;
         this.library = library;
     }
@@ -165,14 +165,14 @@ class Book {
 
 class Library {
     private String name;
-    private List<Book> books;
+    private List<mdel.Book> books;
     
     public Library(String name) {
         this.name = name;
         this.books = new ArrayList<>();
     }
     
-    public void addBook(Book book) {
+    public void addBook(mdel.Book book) {
         books.add(book);
     }
     
@@ -182,7 +182,7 @@ class Library {
     
     public void showBooks() {
         System.out.println("Books in " + name + ":");
-        for (Book book : books) {
+        for (mdel.Book book : books) {
             System.out.println(" - " + book.getTitle());
         }
     }
@@ -191,8 +191,8 @@ class Library {
 public class BidirectionalAssociationExample {
     public static void main(String[] args) {
         Library library = new Library("City Library");
-        Book book1 = new Book("1984", library);
-        Book book2 = new Book("Brave New World", library);
+        mdel.Book book1 = new mdel.Book("1984", library);
+        mdel.Book book2 = new mdel.Book("Brave New World", library);
         
         library.addBook(book1);
         library.addBook(book2);

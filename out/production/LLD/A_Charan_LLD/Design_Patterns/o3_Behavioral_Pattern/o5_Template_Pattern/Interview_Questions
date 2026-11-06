@@ -1,0 +1,21 @@
+1. What is the Template Method Pattern?
+
+The Template Method Pattern is a behavioral design pattern that defines the skeleton of an algorithm in a base class
+(usually an abstract class) and allows subclasses to provide their specific implementations for some steps of the algorithm without
+changing its structure.
+
+2. What problem does the Template Method Pattern solve?
+
+It helps eliminate duplicate code by moving common behavior to a base class, allowing subclasses to only override specific steps.
+ It enforces a consistent algorithm structure across different subclasses.
+
+5. Why is the prepareBeverage() method declared as final?
+
+The final keyword prevents subclasses from modifying the algorithm's overall structure, ensuring that the order of execution
+remains unchanged.
+
+6. What are the key components of the Template Method Pattern?
+
+Abstract Class → Defines the template method and provides default implementations for common steps.
+Concrete Subclasses → Implement the variable steps of the algorithm.
+Template Method (final) → Calls abstract and concrete methods in a fixed order.

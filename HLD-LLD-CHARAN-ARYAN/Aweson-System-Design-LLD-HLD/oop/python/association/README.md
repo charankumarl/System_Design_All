@@ -125,7 +125,7 @@ class Library:
         for book in self.books:
             print(f" - {book.title}")
 
-class Book:
+class mdel.Book:
     def __init__(self, title, library):
         self.title = title
         self.library = library
@@ -136,8 +136,8 @@ class Book:
 # Example Usage
 if __name__ == "__main__":
     library = Library("City Library")
-    book1 = Book("1984", library)
-    book2 = Book("Brave New World", library)
+    book1 = mdel.Book("1984", library)
+    book2 = mdel.Book("Brave New World", library)
     
     library.add_book(book1)
     library.add_book(book2)

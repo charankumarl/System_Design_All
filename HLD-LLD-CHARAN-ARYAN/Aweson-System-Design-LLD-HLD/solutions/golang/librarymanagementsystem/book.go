@@ -2,7 +2,7 @@ package librarymanagementsystem
 
 import "sync"
 
-type Book struct {
+type mdel.Book struct {
 	ISBN            string
 	Title           string
 	Author          string
@@ -11,8 +11,8 @@ type Book struct {
 	mu              sync.RWMutex
 }
 
-func NewBook(isbn, title, author string, publicationYear int) *Book {
-	return &Book{
+func NewBook(isbn, title, author string, publicationYear int) *mdel.Book {
+	return &mdel.Book{
 		ISBN:            isbn,
 		Title:           title,
 		Author:          author,
@@ -21,13 +21,13 @@ func NewBook(isbn, title, author string, publicationYear int) *Book {
 	}
 }
 
-func (b *Book) IsAvailable() bool {
+func (b *mdel.Book) IsAvailable() bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 	return b.available
 }
 
-func (b *Book) SetAvailable(available bool) {
+func (b *mdel.Book) SetAvailable(available bool) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.available = available

@@ -61,7 +61,7 @@ func (h *HotelManagementSystem) BookRoom(guest *Guest, room *Room, checkInDate, 
 		return nil, fmt.Errorf("room is not available")
 	}
 
-	if err := room.Book(); err != nil {
+	if err := room.mdel.Book(); err != nil {
 		return nil, err
 	}
 

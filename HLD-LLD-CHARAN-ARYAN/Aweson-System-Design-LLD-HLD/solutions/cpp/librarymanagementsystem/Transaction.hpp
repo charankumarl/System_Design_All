@@ -2,8 +2,8 @@
 #define TRANSACTION_HPP
 
 #include <string>
-#include "Book.hpp"
-#include "Member.hpp"
+#include "mdel.Book.hpp"
+#include "mdel.Member.hpp"
 
 enum class TransactionType {
     BORROW,
@@ -15,8 +15,8 @@ enum class TransactionType {
 class Transaction {
 private:
     std::string transactionId;
-    Book* book;
-    Member* member;
+    mdel.Book* book;
+    mdel.Member* member;
     TransactionType type;
     std::string issueDate;
     std::string dueDate;
@@ -24,12 +24,12 @@ private:
     double fine;
 
 public:
-    Transaction(std::string transactionId, Book* book, Member* member,
+    Transaction(std::string transactionId, mdel.Book* book, mdel.Member* member,
                TransactionType type, std::string issueDate, std::string dueDate);
     
     std::string getTransactionId() const;
-    Book* getBook() const;
-    Member* getMember() const;
+    mdel.Book* getBook() const;
+    mdel.Member* getMember() const;
     TransactionType getType() const;
     std::string getIssueDate() const;
     std::string getDueDate() const;

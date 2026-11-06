@@ -1,28 +1,29 @@
 1. What is the Facade Design Pattern?
 
-Exposed only insert method to client
+Problem: A system has multiple complex subsystems/classes, and using them correctly requires calling several of them in the right order. Client shouldn't need to know all that internal wiring.
 
-Hided the remaining methods from client. Delete and Update.
-
-Facade is used to hide the complexity of the system and provide an interface to the client using which the
- client can access the system.
-
-We hide the some parts of the system from the client and expose only the required part to the client.
-
-2️⃣ When should you use the Facade Pattern?
-Answer:
-Use the Facade Pattern when:
-✔️ You have a complex system with multiple interdependent classes.
-✔️ You want to simplify interactions with that system.
-✔️ You need to decouple the client code from complex subsystems.
-✔️ You want to provide a clear and consistent interface.
-
-💡 Example: In a banking application, a BankFacade class can provide simple methods like withdraw(amount) and
-deposit(amount), instead of exposing multiple classes like Account, Transaction, SecurityCheck, etc.
+Solution: Put one simple interface (facade) in front of the complex subsystems. Facade internally coordinates all the subsystem calls. Client just calls one simple method.
 
 
-8️⃣ What are the drawbacks of using the Facade Pattern?
+Home theater: to watch a movie you'd normally do:
 
-❌ Tight Coupling: The Facade becomes a central access point to all subsystems.
-❌ Performance Overhead: If the Facade does too much, it may slow down operations.
-❌ Limited Flexibility: Advanced users may need direct access to the subsystems.
+lights.dim();
+projector.turnOn();
+speakers.setVolume(50);
+dvdPlayer.play();
+
+4 objects, 4 calls, specific order. With a facade:
+
+class HomeTheaterFacade {
+    void watchMovie() {
+        lights.dim();
+        projector.turnOn();
+        speakers.setVolume(50);
+        dvdPlayer.play();
+    }
+}
+
+// client:
+homeTheater.watchMovie(); // one call, hides all the coordination
+
+Core use case: simplify a multi-step / multi-subsystem process into one call.

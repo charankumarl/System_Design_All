@@ -137,12 +137,12 @@ using namespace std;
 
 class Library;
 
-class Book {
+class mdel.Book {
 private:
     string title;
     Library* library;
 public:
-    Book(string title, Library* library);
+    mdel.Book(string title, Library* library);
     void showLibrary();
     string getTitle() { return title; }
 };
@@ -150,31 +150,31 @@ public:
 class Library {
 private:
     string name;
-    vector<Book*> books;
+    vector<mdel.Book*> books;
 public:
     Library(string name) : name(name) {}
-    void addBook(Book* book) { books.push_back(book); }
+    void addBook(mdel.Book* book) { books.push_back(book); }
     string getName() { return name; }
     void showBooks();
 };
 
-Book::Book(string title, Library* library) : title(title), library(library) {}
+mdel.Book::mdel.Book(string title, Library* library) : title(title), library(library) {}
 
-void Book::showLibrary() {
+void mdel.Book::showLibrary() {
     cout << title << " is in " << library->getName() << endl;
 }
 
 void Library::showBooks() {
     cout << "Books in " << name << ":" << endl;
-    for (Book* book : books) {
+    for (mdel.Book* book : books) {
         cout << " - " << book->getTitle() << endl;
     }
 }
 
 int main() {
     Library library("City Library");
-    Book book1("1984", &library);
-    Book book2("Brave New World", &library);
+    mdel.Book book1("1984", &library);
+    mdel.Book book2("Brave New World", &library);
     
     library.addBook(&book1);
     library.addBook(&book2);

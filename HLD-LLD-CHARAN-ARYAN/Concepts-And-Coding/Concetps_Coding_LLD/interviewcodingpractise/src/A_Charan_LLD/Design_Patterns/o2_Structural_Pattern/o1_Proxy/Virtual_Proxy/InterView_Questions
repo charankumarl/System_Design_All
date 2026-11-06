@@ -17,3 +17,26 @@ Caching (Smart Proxy) – Store frequently accessed data to improve performance.
 2️⃣ Protection Proxy – Restricts access based on permissions.
 3️⃣ Remote Proxy – Represents an object on a remote server (e.g., RMI, API Gateway).
 4️⃣ Smart Proxy – Adds additional behavior like logging, caching, etc.
+
+
+What is Virtual Proxy.
+
+See user creates object to make use of it. to perform some operation.
+
+To Create a Object it is so much expensive, uses more CPU and MEMORY.
+
+Suppose, we created it and do use it, then it is the waste of CPU and MEMORY.
+
+So PROXY pattern is used to create a object only when it is required. It is called as Virtual Proxy.
+
+┌──────────────────────────────┬─────────────────────────────────────────────────────────────────────────┐
+│             Type             │                              Why intercept                              │
+├──────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Virtual Proxy (your example) │ Delay expensive creation until actually used                            │
+├──────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Protection Proxy             │ Check permissions before allowing access                                │
+├──────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Remote Proxy                 │ Real object lives on another server — proxy hides the network call      │
+├──────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Logging/Caching Proxy        │ Log every call, or cache results, before/instead of hitting real object │
+└──────────────────────────────┴─────────────────────────────────────────────────────────────────────────┘

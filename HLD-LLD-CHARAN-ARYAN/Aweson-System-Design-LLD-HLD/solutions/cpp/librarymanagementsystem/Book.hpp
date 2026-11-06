@@ -10,7 +10,7 @@ enum class BookStatus {
     LOST
 };
 
-class Book {
+class mdel.Book {
 private:
     std::string bookId;
     std::string title;
@@ -21,7 +21,7 @@ private:
     int publicationYear;
 
 public:
-    Book(std::string bookId, std::string title, std::string author,
+    mdel.Book(std::string bookId, std::string title, std::string author,
          std::string publisher, std::string isbn, int publicationYear);
     
     std::string getBookId() const;

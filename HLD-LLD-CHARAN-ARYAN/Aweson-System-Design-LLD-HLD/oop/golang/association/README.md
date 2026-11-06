@@ -125,15 +125,15 @@ import "fmt"
 
 type Library struct {
     Name  string
-    Books []*Book
+    Books []*mdel.Book
 }
 
-type Book struct {
+type mdel.Book struct {
     Title   string
     Library *Library
 }
 
-func (l *Library) AddBook(b *Book) {
+func (l *Library) AddBook(b *mdel.Book) {
     l.Books = append(l.Books, b)
 }
 
@@ -144,14 +144,14 @@ func (l *Library) ShowBooks() {
     }
 }
 
-func (b *Book) ShowLibrary() {
+func (b *mdel.Book) ShowLibrary() {
     fmt.Println(b.Title, "is in", b.Library.Name)
 }
 
 func main() {
     library := Library{Name: "City Library"}
-    book1 := Book{Title: "1984", Library: &library}
-    book2 := Book{Title: "Brave New World", Library: &library}
+    book1 := mdel.Book{Title: "1984", Library: &library}
+    book2 := mdel.Book{Title: "Brave New World", Library: &library}
     
     library.AddBook(&book1)
     library.AddBook(&book2)

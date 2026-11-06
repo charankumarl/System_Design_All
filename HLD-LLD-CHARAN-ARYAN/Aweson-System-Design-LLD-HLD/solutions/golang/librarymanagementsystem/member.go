@@ -2,39 +2,39 @@ package librarymanagementsystem
 
 import "sync"
 
-type Member struct {
+type mdel.Member struct {
 	MemberID      string
 	Name          string
 	ContactInfo   string
-	borrowedBooks map[string]*Book // Using map for O(1) lookups
+	borrowedBooks map[string]*mdel.Book // Using map for O(1) lookups
 	mu            sync.RWMutex
 }
 
-func NewMember(memberID, name, contactInfo string) *Member {
-	return &Member{
+func NewMember(memberID, name, contactInfo string) *mdel.Member {
+	return &mdel.Member{
 		MemberID:      memberID,
 		Name:          name,
 		ContactInfo:   contactInfo,
-		borrowedBooks: make(map[string]*Book),
+		borrowedBooks: make(map[string]*mdel.Book),
 	}
 }
 
-func (m *Member) BorrowBook(book *Book) {
+func (m *mdel.Member) BorrowBook(book *mdel.Book) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.borrowedBooks[book.ISBN] = book
 }
 
-func (m *Member) ReturnBook(book *Book) {
+func (m *mdel.Member) ReturnBook(book *mdel.Book) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.borrowedBooks, book.ISBN)
 }
 
-func (m *Member) GetBorrowedBooks() []*Book {
+func (m *mdel.Member) GetBorrowedBooks() []*mdel.Book {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	books := make([]*Book, 0, len(m.borrowedBooks))
+	books := make([]*mdel.Book, 0, len(m.borrowedBooks))
 	for _, book := range m.borrowedBooks {
 		books = append(books, book)
 	}

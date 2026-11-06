@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 Users, 1 Seat — Concurrency Race</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#ffffff; --text:#1b1f24; --muted:#6b7280; --border:#dde1e6;
+    --accent:#2563eb; --accent-soft:#e8f0fe;
+    --good:#15803d; --good-bg:#e9f7ef; --good-border:#bfe3cc;
+    --bad:#b91c1c; --bad-bg:#fdecec; --bad-border:#f3c6c6;
+    --key:#92400e; --key-bg:#fff6e2; --key-border:#f0ddab;
+    --note-bg:#eef2ff; --note-border:#cbd5f5;
+    --code-bg:#0f172a; --code-text:#e2e8f0;
+    --map-outer:#eef2ff; --map-outer-border:#c7d2ef;
+    --map-inner:#ffffff; --map-inner-border:#d8deea;
+    --held:#15803d; --held-bg:#e9f7ef; --held-border:#9fd9b4;
+    --idle:#6b7280; --idle-bg:#eef0f3; --idle-border:#d6dae0;
+    --new:#1d4ed8; --new-bg:#e6edfd; --new-border:#b9caf6;
+    --removed:#b91c1c; --removed-bg:#fdecec; --removed-border:#f3c6c6;
+    --win:#15803d; --win-bg:#e9f7ef; --win-border:#9fd9b4;
+    --lose:#b91c1c; --lose-bg:#fdecec; --lose-border:#f3c6c6;
+    --wait:#92400e; --wait-bg:#fff6e2; --wait-border:#f0ddab;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1115; --surface:#171a21; --text:#e6e8eb; --muted:#9aa4b2; --border:#2b2f38;
+      --accent:#60a5fa; --accent-soft:#1c2636;
+      --good:#4ade80; --good-bg:#122a1c; --good-border:#1f4a30;
+      --bad:#f87171; --bad-bg:#2e1414; --bad-border:#5a2323;
+      --key:#fbbf24; --key-bg:#312505; --key-border:#5a4710;
+      --note-bg:#1b2236; --note-border:#334066;
+      --code-bg:#0b0d12; --code-text:#d7e0ea;
+      --map-outer:#1b2130; --map-outer-border:#324066;
+      --map-inner:#11151c; --map-inner-border:#2a3140;
+      --held:#4ade80; --held-bg:#12271b; --held-border:#235239;
+      --idle:#8a93a1; --idle-bg:#1a1e26; --idle-border:#333a46;
+      --new:#8ab4ff; --new-bg:#15233f; --new-border:#2c4a86;
+      --removed:#f87171; --removed-bg:#301414; --removed-border:#5c2424;
+      --win:#4ade80; --win-bg:#12271b; --win-border:#235239;
+      --lose:#f87171; --lose-bg:#301414; --lose-border:#5c2424;
+      --wait:#fbbf24; --wait-bg:#312505; --wait-border:#5a4710;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height:1.55;
+    padding: 24px 16px 80px;
+  }
+  .wrap{ max-width: 920px; margin: 0 auto; }
+
+  h1{ font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle{ color:var(--muted); margin-top:0; margin-bottom: 28px; font-size: 0.95rem;}
+
+  nav.toc{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding: 16px 20px; margin-bottom: 32px;
+  }
+  nav.toc h2{ font-size: 0.85rem; text-transform: uppercase; letter-spacing: .04em; color:var(--muted); margin:0 0 10px;}
+  nav.toc ol{ margin:0; padding-left: 1.2em; columns: 2; column-gap: 24px;}
+  nav.toc a{ color:var(--accent); text-decoration:none; }
+  nav.toc a:hover{ text-decoration:underline; }
+  nav.toc li{ margin-bottom:6px; break-inside: avoid;}
+
+  section{ margin-bottom: 44px; }
+  .badge{
+    display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:.03em;
+    padding: 2px 9px; border-radius: 999px; margin-left:8px; vertical-align: middle;
+    text-transform: uppercase;
+  }
+  .badge.win{ background:var(--win-bg); color:var(--win); border:1px solid var(--win-border);}
+  .badge.lose{ background:var(--lose-bg); color:var(--lose); border:1px solid var(--lose-border);}
+  .badge.wait{ background:var(--wait-bg); color:var(--wait); border:1px solid var(--wait-border);}
+
+  h2.method-title{
+    font-size: 1.25rem; margin: 0 0 4px; display:flex; align-items:center; gap:8px;
+  }
+  .step-num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:50%; background:var(--accent); color:white;
+    font-weight:700; font-size:0.85rem; flex-shrink:0;
+  }
+  code, .mono{ font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.88em; }
+
+  pre{
+    background:var(--code-bg); color:var(--code-text); padding:14px 16px; border-radius:10px;
+    overflow-x:auto; font-size: 0.82rem; line-height:1.5; margin: 12px 0;
+  }
+  pre code{ font-size: inherit; }
+
+  .callout{
+    border-radius:10px; padding:12px 16px; margin: 14px 0; border:1px solid; font-size:0.92rem;
+  }
+  .callout.note{ background:var(--note-bg); border-color:var(--note-border); }
+  .callout.good{ background:var(--good-bg); border-color:var(--good-border); color:var(--good); }
+  .callout.bad{ background:var(--bad-bg); border-color:var(--bad-border); color:var(--bad); }
+  .callout.key{ background:var(--key-bg); border-color:var(--key-border); color:var(--key); }
+  .callout b{ color:inherit; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding: 20px 22px; margin: 16px 0;
+  }
+
+  /* ---- request cards ---- */
+  .requests{ display:flex; gap:14px; flex-wrap:wrap; margin:16px 0; }
+  .req-card{
+    flex:1; min-width:150px; background:var(--surface); border:2px solid var(--border);
+    border-radius:12px; padding:14px 16px; text-align:center;
+  }
+  .req-card .who{ font-weight:700; font-size:1rem; margin-bottom:6px;}
+  .req-card .seats{ font-family:"SF Mono", Menlo, Consolas, monospace; font-size:0.95rem; color:var(--accent);}
+
+  /* ---- map / lane diagram components ---- */
+  .map-outer{
+    background:var(--map-outer); border:1px solid var(--map-outer-border); border-radius:12px;
+    padding:12px; display:flex; flex-direction:column; gap:10px;
+  }
+  .map-inner{
+    background:var(--map-inner); border:1px solid var(--map-inner-border); border-radius:10px;
+    padding:8px; display:flex; flex-direction:column; gap:6px;
+  }
+  .map-inner-entry{
+    display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px;
+    background: var(--idle-bg); border:1px solid var(--idle-border); font-size:0.85rem; flex-wrap:wrap;
+  }
+  .map-inner-entry .k{ font-weight:700; color:var(--text); }
+  .map-inner-entry .arrow{ color:var(--muted); }
+  .map-inner-entry .v{ color:var(--muted); }
+  .map-inner-entry.held{ background:var(--held-bg); border-color:var(--held-border); }
+  .map-inner-entry.held .v{ color:var(--held); font-weight:600; }
+  .map-inner-entry.win{ background:var(--win-bg); border-color:var(--win-border); }
+  .map-inner-entry.win .v{ color:var(--win); font-weight:600; }
+  .map-inner-entry.wait{ background:var(--wait-bg); border-color:var(--wait-border); }
+  .map-inner-entry.wait .v{ color:var(--wait); font-weight:600; }
+  .map-inner-entry.lose{ background:var(--lose-bg); border-color:var(--lose-border); text-decoration: line-through; opacity:0.8;}
+  .map-inner-entry.lose .v{ color:var(--lose); }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:0.78rem; color:var(--muted); margin: 10px 0 18px;}
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .swatch{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .swatch.idle{ background:var(--idle-bg); border:1px solid var(--idle-border); }
+  .swatch.held{ background:var(--held-bg); border:1px solid var(--held-border); }
+  .swatch.win{ background:var(--win-bg); border:1px solid var(--win-border); }
+  .swatch.wait{ background:var(--wait-bg); border:1px solid var(--wait-border); }
+  .swatch.lose{ background:var(--lose-bg); border:1px solid var(--lose-border); }
+
+  .step-block{
+    border-left: 3px solid var(--border); padding-left: 16px; margin: 20px 0;
+  }
+  .step-block .step-header{
+    display:flex; align-items:center; gap:10px; margin-bottom:10px; font-weight:700;
+  }
+
+  table.summary{ width:100%; border-collapse: collapse; font-size:0.86rem; margin-top:10px;}
+  table.summary th, table.summary td{
+    border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top;
+  }
+  table.summary th{ background:var(--accent-soft); }
+  table.summary code{ white-space: nowrap; }
+  table.summary tr.win-row td{ background:var(--win-bg); }
+  table.summary tr.lose-row td{ background:var(--lose-bg); }
+
+  hr.sep{ border:none; border-top:1px solid var(--border); margin: 36px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>3 Users, 1 Shared Seat — Concurrency Race</h1>
+  <p class="subtitle">Tracing <code>lockSeats()</code> when three customers hit the same show at the same instant, overlapping on seat 2.</p>
+
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#requests">1. The three requests</a></li>
+      <li><a href="#sort">2. Each request sorts its own seats</a></li>
+      <li><a href="#race">3. The race for seat 2's lock</a></li>
+      <li><a href="#winner">4. The winner runs, unopposed</a></li>
+      <li><a href="#loser1">5. First loser wakes up and fails</a></li>
+      <li><a href="#loser2">6. Second loser wakes up and fails too</a></li>
+      <li><a href="#outcome">7. Final outcome</a></li>
+      <li><a href="#takeaways">8. Key takeaways</a></li>
+    </ol>
+  </nav>
+
+  <section id="requests">
+    <h2 class="method-title">1. The Three Requests</h2>
+    <p>Same show. Three different customers call <code>lockSeats()</code> at roughly the same moment.</p>
+    <div class="requests">
+      <div class="req-card"><div class="who">U1</div><div class="seats">[1, 2]</div></div>
+      <div class="req-card"><div class="who">U2</div><div class="seats">[2, 3]</div></div>
+      <div class="req-card"><div class="who">U3</div><div class="seats">[2, 4]</div></div>
+    </div>
+    <div class="callout note">
+      Seats 1, 3, 4 are each wanted by only <b>one</b> user — no real conflict there.
+      Seat <b>2</b> is the only point every request overlaps on — that's the entire fight.
+    </div>
+  </section>
+
+  <section id="sort">
+    <h2 class="method-title">2. Each Request Sorts Its Own Seats First</h2>
+    <pre><code>U1 → sorted [1, 2]
+U2 → sorted [2, 3]
+U3 → sorted [2, 4]</code></pre>
+    <div class="callout key">
+      This matters later: every thread locks its <b>lowest seat ID first</b>. Nobody ever holds a high seat
+      and reaches backward for a lower one — that's exactly what prevents a deadlock here.
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <section id="race">
+    <h2 class="method-title">3. The Race for Seat 2's <code class="mono">ReentrantLock</code></h2>
+    <p>All three threads eventually call <code>seatLockMap.computeIfAbsent(seat2,...).lock()</code>.
+       Only <b>one</b> can hold it — the OS thread scheduler decides who gets there first, which is
+       genuinely <b>non-deterministic</b>. For this walkthrough, say <b>U2 wins</b>.</p>
+
+    <div class="legend">
+      <span><span class="swatch win"></span> winner — proceeds</span>
+      <span><span class="swatch wait"></span> blocked, waiting</span>
+      <span><span class="swatch idle"></span> uncontested, acquired instantly</span>
+    </div>
+
+    <div class="map-outer">
+      <div class="map-inner">
+        <div class="map-inner-entry idle"><span class="k">U1</span><span class="arrow">→</span><span class="v">holds seat 1's lock (nobody else wanted it) · now blocked waiting for seat 2</span></div>
+        <div class="map-inner-entry win"><span class="k">U2</span><span class="arrow">→</span><span class="v">WINS seat 2's lock · proceeds to seat 3 (uncontested, instant)</span></div>
+        <div class="map-inner-entry wait"><span class="k">U3</span><span class="arrow">→</span><span class="v">blocked, waiting for seat 2</span></div>
+      </div>
+    </div>
+    <p>Right now: U2 is running. U1 and U3 are both parked, queued on seat 2's lock.</p>
+  </section>
+
+  <hr class="sep">
+
+  <section id="winner">
+    <h2 class="method-title">4. U2 Runs Its Check + Write, Fully Unopposed <span class="badge win">winner</span></h2>
+    <pre><code>check seat2 → no entry → free
+check seat3 → no entry → free
+→ writes SeatLock(U2) for seat 2
+→ writes SeatLock(U2) for seat 3
+finally → releases seat2's lock, releases seat3's lock</code></pre>
+    <div class="map-outer">
+      <div class="map-inner">
+        <div class="map-inner-entry win"><span class="k">Seat 2</span><span class="arrow">→</span><span class="v">SeatLock(U2) — written</span></div>
+        <div class="map-inner-entry win"><span class="k">Seat 3</span><span class="arrow">→</span><span class="v">SeatLock(U2) — written</span></div>
+      </div>
+    </div>
+    <div class="callout good"><b>U2's booking succeeds completely.</b> Seat 2's <code>ReentrantLock</code> is now free again — the next waiter can proceed.</div>
+  </section>
+
+  <hr class="sep">
+
+  <section id="loser1">
+    <h2 class="method-title">5. Seat 2 Frees Up — Say U3 Gets It Next <span class="badge lose">loser</span></h2>
+    <pre><code>U3 acquires seat2's lock → also grabs seat4's lock (uncontested)
+
+check seat2 → SeatLock(U2) found, NOT expired
+→ throw "Seat 2 is already locked"
+
+finally → releases seat2's lock AND seat4's lock</code></pre>
+    <div class="map-outer">
+      <div class="map-inner">
+        <div class="map-inner-entry lose"><span class="k">Seat 2</span><span class="arrow">→</span><span class="v">U3 wanted it — blocked by U2's entry</span></div>
+        <div class="map-inner-entry lose"><span class="k">Seat 4</span><span class="arrow">→</span><span class="v">U3 loses this too, even though nobody else wanted it</span></div>
+      </div>
+    </div>
+    <div class="callout bad"><b>U3's entire request fails</b> — including seat 4, which was never actually contested.
+      It's all-or-nothing: a request either gets every seat it asked for, or none of them.</div>
+  </section>
+
+  <hr class="sep">
+
+  <section id="loser2">
+    <h2 class="method-title">6. Last One Standing: U1 <span class="badge lose">loser</span></h2>
+    <p>U1 was parked on seat 2's lock this whole time, still holding seat 1's lock from the very start.
+       Once U3 releases seat 2, U1 finally gets it.</p>
+    <pre><code>check seat1 → no entry → free
+check seat2 → SeatLock(U2) found, NOT expired
+→ throw "Seat 2 is already locked"
+
+finally → releases seat1's lock AND seat2's lock</code></pre>
+    <div class="map-outer">
+      <div class="map-inner">
+        <div class="map-inner-entry lose"><span class="k">Seat 1</span><span class="arrow">→</span><span class="v">U1 held this uncontested the whole time — loses it anyway</span></div>
+        <div class="map-inner-entry lose"><span class="k">Seat 2</span><span class="arrow">→</span><span class="v">blocked by U2's entry</span></div>
+      </div>
+    </div>
+    <div class="callout bad"><b>U1's entire request also fails.</b> Same all-or-nothing rule — holding seat 1 the whole time counted for nothing once seat 2 turned out to be taken.</div>
+  </section>
+
+  <hr class="sep">
+
+  <section id="outcome">
+    <h2 class="method-title">7. Final Outcome</h2>
+    <table class="summary">
+      <thead>
+        <tr><th>User</th><th>Wanted</th><th>Result</th></tr>
+      </thead>
+      <tbody>
+        <tr class="lose-row"><td>U1</td><td class="mono">1, 2</td><td>❌ Fails entirely — loses seat 1 too</td></tr>
+        <tr class="win-row"><td>U2</td><td class="mono">2, 3</td><td>✅ Succeeds — gets both seats</td></tr>
+        <tr class="lose-row"><td>U3</td><td class="mono">2, 4</td><td>❌ Fails entirely — loses seat 4 too</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="sep">
+
+  <section id="takeaways">
+    <h2 class="method-title">8. Key Takeaways</h2>
+    <div class="callout key"><b>1. Exactly one of the three wins</b> — whichever thread gets seat 2's lock first and completes its check+write before the others reach their own check.</div>
+    <div class="callout key"><b>2. Who wins is non-deterministic</b> — depends on OS thread scheduling, not the code. Running this 100 times could produce U1, U2, or U3 winning in different runs.</div>
+    <div class="callout key"><b>3. Losing is all-or-nothing</b> — a loser's entire request fails, even seats nobody else wanted (seat 1 for U1, seat 4 for U3). You never end up with half your requested seats.</div>
+    <div class="callout key"><b>4. No deadlock</b> — every thread locks seats in ascending ID order, so nobody ever ends up in a circular "I'm waiting for what you're holding, you're waiting for what I'm holding" situation.</div>
+  </section>
+
+</div>
+</body>
+</html>

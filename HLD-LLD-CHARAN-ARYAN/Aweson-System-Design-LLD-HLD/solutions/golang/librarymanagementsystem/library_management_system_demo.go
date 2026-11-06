@@ -8,9 +8,9 @@ func Run() {
 	libraryManager := GetLibraryManager()
 
 	// Add books to the catalog
-	book1 := NewBook("ISBN1", "Book 1", "Author 1", 2020)
-	book2 := NewBook("ISBN2", "Book 2", "Author 2", 2019)
-	book3 := NewBook("ISBN3", "Book 3", "Author 3", 2021)
+	book1 := NewBook("ISBN1", "mdel.Book 1", "Author 1", 2020)
+	book2 := NewBook("ISBN2", "mdel.Book 2", "Author 2", 2019)
+	book3 := NewBook("ISBN3", "mdel.Book 3", "Author 3", 2021)
 
 	libraryManager.AddBook(book1)
 	libraryManager.AddBook(book2)
@@ -38,7 +38,7 @@ func Run() {
 	}
 
 	// Search books
-	searchResults := libraryManager.SearchBooks("Book")
+	searchResults := libraryManager.SearchBooks("mdel.Book")
 	fmt.Println("\nSearch Results:")
 	for _, book := range searchResults {
 		fmt.Printf("%s by %s\n", book.Title, book.Author)

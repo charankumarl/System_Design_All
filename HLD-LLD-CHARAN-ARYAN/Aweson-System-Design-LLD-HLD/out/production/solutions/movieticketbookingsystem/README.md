@@ -92,7 +92,7 @@ Theater theater = system.addTheater("Cineplex", "Downtown");
 // Add a show
 Show show = system.addShow(movie, theater, showTime);
 
-// Book tickets
+// mdel.Book tickets
 User user = new User("John Doe", "john@example.com");
 Booking booking = system.bookTicket(user, show, seats);
 ```

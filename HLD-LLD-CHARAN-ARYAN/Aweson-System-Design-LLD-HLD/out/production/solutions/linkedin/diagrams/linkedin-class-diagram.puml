@@ -29,25 +29,25 @@ class ChronologicalSortStrategy {
 class Comment {
   - text: String
   - createdAt: LocalDateTime
-  - author: Member
+  - author: mdel.Member
   + getText(): String
-  + getAuthor(): Member
+  + getAuthor(): mdel.Member
 }
 class Connection {
-  - toMember: Member
+  - toMember: mdel.Member
   - acceptedAt: LocalDateTime
-  - fromMember: Member
+  - fromMember: mdel.Member
   - requestedAt: LocalDateTime
   - status: ConnectionStatus
   + getStatus(): ConnectionStatus
-  + getFromMember(): Member
-  + getToMember(): Member
+  + getFromMember(): mdel.Member
+  + getToMember(): mdel.Member
   + setStatus(ConnectionStatus): void
 }
 class ConnectionService {
   - notificationService: NotificationService
   - connectionRequests: Map<String, Connection>
-  + sendRequest(Member, Member): String
+  + sendRequest(mdel.Member, mdel.Member): String
   + acceptRequest(String): void
 }
 enum ConnectionStatus << enumeration >> {
@@ -74,36 +74,36 @@ interface FeedSortingStrategy << interface >> {
   + sort(List<Post>): List<Post>
 }
 class Like {
-  - member: Member
+  - member: mdel.Member
   - createdAt: LocalDateTime
-  + getMember(): Member
+  + getMember(): mdel.Member
 }
 class LinkedInSystem {
   - newsFeedService: NewsFeedService
   - searchService: SearchService
-  - members: Map<String, Member>
+  - members: Map<String, mdel.Member>
   - connectionService: ConnectionService
   - instance: LinkedInSystem
-  + registerMember(Member): void
-  + getMember(String): Member
+  + registerMember(mdel.Member): void
+  + getMember(String): mdel.Member
   + getInstance(): LinkedInSystem
   + createPost(String, String): void
-  + sendConnectionRequest(Member, Member): String
+  + sendConnectionRequest(mdel.Member, mdel.Member): String
   + acceptConnectionRequest(String): void
   + viewNewsFeed(String): void
-  + searchMemberByName(String): List<Member>
+  + searchMemberByName(String): List<mdel.Member>
   + getLatestPostByMember(String): Post
 }
-class Member {
+class mdel.Member {
   - profile: Profile
   - notifications: List<Notification>
   - id: String
   - email: String
-  - connections: Set<Member>
+  - connections: Set<mdel.Member>
   - name: String
   + viewNotifications(): void
   + update(Notification): void
-  + addConnection(Member): void
+  + addConnection(mdel.Member): void
   + displayProfile(): void
 }
 class NewsFeed {
@@ -112,9 +112,9 @@ class NewsFeed {
 }
 class NewsFeedService {
   - allPosts: Map<String, List<Post>>
-  + getMemberPosts(Member): List<Post>
-  + addPost(Member, Post): void
-  + displayFeedForMember(Member, FeedSortingStrategy): void
+  + getMemberPosts(mdel.Member): List<Post>
+  + addPost(mdel.Member, Post): void
+  + displayFeedForMember(mdel.Member, FeedSortingStrategy): void
 }
 class Notification {
   - createdAt: LocalDateTime
@@ -130,7 +130,7 @@ interface NotificationObserver << interface >> {
   + update(Notification): void
 }
 class NotificationService {
-  + sendNotification(Member, Notification): void
+  + sendNotification(mdel.Member, Notification): void
 }
 enum NotificationType << enumeration >> {
   + CONNECTION_REQUEST
@@ -142,10 +142,10 @@ class Post {
   - comments: List<Comment>
   - createdAt: LocalDateTime
   - content: String
-  - author: Member
+  - author: mdel.Member
   - id: String
-  + addComment(Member, String): void
-  + addLike(Member): void
+  + addComment(mdel.Member, String): void
+  + addLike(mdel.Member): void
 }
 class Profile {
   - summary: String
@@ -157,8 +157,8 @@ class Profile {
   + addEducation(Education): void
 }
 class SearchService {
-  - members: Collection<Member>
-  + searchByName(String): List<Member>
+  - members: Collection<mdel.Member>
+  + searchByName(String): List<mdel.Member>
 }
 abstract class Subject {
   - observers: List<NotificationObserver>
@@ -172,29 +172,29 @@ class LinkedInDemo #00bfff {
 }
 
 FeedSortingStrategy       ^-[dashed]- ChronologicalSortStrategy
-Comment                   *-[plain]-> Member
+Comment                   *-[plain]-> mdel.Member
 Connection                *-[plain]-> ConnectionStatus
-Connection                *-[plain]-> Member
+Connection                *-[plain]-> mdel.Member
 ConnectionService         *-[plain]-> Connection
 ConnectionService         *-[plain]-> NotificationService
-Like                      *-[plain]-> Member
+Like                      *-[plain]-> mdel.Member
 LinkedInSystem            *-[plain]--> ConnectionService
-LinkedInSystem            *-[plain]-> Member
+LinkedInSystem            *-[plain]-> mdel.Member
 LinkedInSystem            *-[plain]-> NewsFeedService
 NewsFeedService           -[plain]-> FeedSortingStrategy
 LinkedInSystem            *-[plain]-> SearchService
-Member                    *-[plain]-> Notification
-Member                     -[dashed]-^  NotificationObserver
-Member                    *-[plain]-> Profile
+mdel.Member                    *-[plain]-> Notification
+mdel.Member                     -[dashed]-^  NotificationObserver
+mdel.Member                    *-[plain]-> Profile
 NewsFeed                  *-[plain]-> Post
 Notification              *-[plain]-> NotificationType
 Post                      *-[plain]-> Comment
 Post                      *-[plain]-> Like
-Post                      *-[plain]-> Member
+Post                      *-[plain]-> mdel.Member
 Post                       -[plain]-^  Subject
 Profile                   *-[plain]left-> Education
 Profile                   *-[plain]-> Experience
-SearchService             *-[plain]-> Member
+SearchService             *-[plain]-> mdel.Member
 Subject                   *-[plain]-> NotificationObserver
 LinkedInDemo              *-[plain]right-> LinkedInSystem
 @enduml

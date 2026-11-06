@@ -17,7 +17,7 @@ func main() {
 	// Iterate through the books
 	fmt.Println("Iterating through the book collection:")
 	for iterator.HasNext() {
-		book := iterator.Next().(*Book)
-		fmt.Printf("Book: %s by %s\n", book.Title, book.Author)
+		book := iterator.Next().(*mdel.Book)
+		fmt.Printf("mdel.Book: %s by %s\n", book.Title, book.Author)
 	}
 }

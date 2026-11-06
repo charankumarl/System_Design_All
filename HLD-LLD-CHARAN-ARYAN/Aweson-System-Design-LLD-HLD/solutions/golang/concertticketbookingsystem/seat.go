@@ -21,7 +21,7 @@ func NewSeat(id, seatNumber string, seatType SeatType, price float64) *Seat {
 	}
 }
 
-func (s *Seat) Book() error {
+func (s *Seat) mdel.Book() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

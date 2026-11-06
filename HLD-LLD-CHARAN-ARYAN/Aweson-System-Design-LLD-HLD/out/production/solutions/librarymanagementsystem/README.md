@@ -8,8 +8,8 @@ Design and implement a Library Management System that allows members to borrow a
 
 ## Requirements
 
-- **Book Management:** The system manages a catalog of books, each with multiple copies.
-- **Member Management:** The system manages library members who can borrow and return books.
+- **mdel.Book Management:** The system manages a catalog of books, each with multiple copies.
+- **mdel.Member Management:** The system manages library members who can borrow and return books.
 - **Loan Management:** The system tracks which member has borrowed which book copy and when.
 - **Borrowing and Returning:** Members can borrow available book copies and return them.
 - **Catalog Search:** Members can search for books by title, author, or ISBN.
@@ -20,9 +20,9 @@ Design and implement a Library Management System that allows members to borrow a
 ## Core Entities
 
 - **LibraryManagementSystem:** Main class that manages books, members, loans, and the catalog.
-- **Book:** Represents a book with title, author, ISBN, and other metadata.
+- **mdel.Book:** Represents a book with title, author, ISBN, and other metadata.
 - **BookCopy:** Represents a physical copy of a book, with a unique copy ID and availability status.
-- **Member:** Represents a library member with a unique ID and name.
+- **mdel.Member:** Represents a library member with a unique ID and name.
 - **Loan:** Represents a loan record for a book copy borrowed by a member.
 - **Catalog:** Manages the collection of books and supports search functionality.
 
@@ -35,23 +35,23 @@ Design and implement a Library Management System that allows members to borrow a
 ![](../../../../uml-diagrams/class-diagrams/LibraryManagementSystem-class-diagram.png)
 
 ### 1. LibraryManagementSystem
-- **Fields:** List<Book> books, List<Member> members, List<Loan> loans, Catalog catalog
-- **Methods:** addBook(Book), addMember(Member), borrowBook(Member, Book), returnBook(Member, BookCopy), getLoans(Member), searchBooks(String query), etc.
+- **Fields:** List<mdel.Book> books, List<mdel.Member> members, List<Loan> loans, Catalog catalog
+- **Methods:** addBook(mdel.Book), addMember(mdel.Member), borrowBook(mdel.Member, mdel.Book), returnBook(mdel.Member, BookCopy), getLoans(mdel.Member), searchBooks(String query), etc.
 
-### 2. Book
+### 2. mdel.Book
 - **Fields:** String title, String author, String isbn, List<BookCopy> copies
 
 ### 3. BookCopy
-- **Fields:** int copyId, Book book, boolean isAvailable
+- **Fields:** int copyId, mdel.Book book, boolean isAvailable
 
-### 4. Member
+### 4. mdel.Member
 - **Fields:** int id, String name, List<Loan> loans
 
 ### 5. Loan
-- **Fields:** int id, Member member, BookCopy bookCopy, Date loanDate, Date returnDate
+- **Fields:** int id, mdel.Member member, BookCopy bookCopy, Date loanDate, Date returnDate
 
 ### 6. Catalog
-- **Fields:** List<Book> books
+- **Fields:** List<mdel.Book> books
 - **Methods:** searchByTitle(String), searchByAuthor(String), searchByISBN(String)
 
 ---
@@ -60,10 +60,10 @@ Design and implement a Library Management System that allows members to borrow a
 
 ```java
 LibraryManagementSystem system = new LibraryManagementSystem();
-Book book = new Book("Effective Java", "Joshua Bloch", "978-0134685991");
+mdel.Book book = new mdel.Book("Effective Java", "Joshua Bloch", "978-0134685991");
 system.addBook(book);
 
-Member alice = new Member(1, "Alice");
+mdel.Member alice = new mdel.Member(1, "Alice");
 system.addMember(alice);
 
 system.borrowBook(alice, book);

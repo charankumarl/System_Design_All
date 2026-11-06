@@ -1,0 +1,29 @@
+1. What is the Facade Design Pattern?
+
+Problem: A system has multiple complex subsystems/classes, and using them correctly requires calling several of them in the right order. Client shouldn't need to know all that internal wiring.
+
+Solution: Put one simple interface (facade) in front of the complex subsystems. Facade internally coordinates all the subsystem calls. Client just calls one simple method.
+
+
+Home theater: to watch a movie you'd normally do:
+
+lights.dim();
+projector.turnOn();
+speakers.setVolume(50);
+dvdPlayer.play();
+
+4 objects, 4 calls, specific order. With a facade:
+
+class HomeTheaterFacade {
+    void watchMovie() {
+        lights.dim();
+        projector.turnOn();
+        speakers.setVolume(50);
+        dvdPlayer.play();
+    }
+}
+
+// client:
+homeTheater.watchMovie(); // one call, hides all the coordination
+
+Core use case: simplify a multi-step / multi-subsystem process into one call.

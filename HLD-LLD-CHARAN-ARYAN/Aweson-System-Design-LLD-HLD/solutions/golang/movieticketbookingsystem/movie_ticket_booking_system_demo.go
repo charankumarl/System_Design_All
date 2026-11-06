@@ -50,7 +50,7 @@ func Run() {
 		show1.Seats["1-6"],
 	}
 
-	// Book tickets
+	// mdel.Book tickets
 	booking, err := bookingSystem.BookTickets(user, show1, selectedSeats)
 	if err != nil {
 		fmt.Printf("Booking failed: %v\n", err)

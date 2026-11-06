@@ -20,7 +20,7 @@ func Run() {
 	hotelSystem.AddRoom(room1)
 	hotelSystem.AddRoom(room2)
 
-	// Book a room
+	// mdel.Book a room
 	checkInDate := time.Now()
 	checkOutDate := checkInDate.AddDate(0, 0, 3)
 

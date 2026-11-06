@@ -5,16 +5,16 @@ int main() {
     LibraryManager library;
     
     // Add books
-    Book* book1 = new Book("B001", "The Great Gatsby", "F. Scott Fitzgerald",
+    mdel.Book* book1 = new mdel.Book("B001", "The Great Gatsby", "F. Scott Fitzgerald",
                           "Scribner", "978-0743273565", 1925);
-    Book* book2 = new Book("B002", "To Kill a Mockingbird", "Harper Lee",
+    mdel.Book* book2 = new mdel.Book("B002", "To Kill a Mockingbird", "Harper Lee",
                           "HarperCollins", "978-0446310789", 1960);
     
     library.addBook(book1);
     library.addBook(book2);
     
     // Add members
-    Member* member1 = new Member("M001", "John Doe", "john@example.com",
+    mdel.Member* member1 = new mdel.Member("M001", "John Doe", "john@example.com",
                                "+1-555-0123");
     library.addMember(member1);
     

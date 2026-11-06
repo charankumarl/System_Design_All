@@ -24,6 +24,7 @@ public class KafkaController {
         topicSubscribers = new ConcurrentHashMap<>();
         // Using a cached thread pool to dynamically manage threads.
         subscriberExecutor = Executors.newCachedThreadPool();
+        // Executors.newFixedThreadPool(10)   // this is fixed thread pool.
         topicIdCounter = new AtomicInteger(0);
     }
 
@@ -45,7 +46,8 @@ public class KafkaController {
         TopicSubscriber ts = new TopicSubscriber(topic, subscriber);
         topicSubscribers.get(topicId).add(ts);
         // Submit the subscriber task to the executor.
-        subscriberExecutor.submit(new TopicSubscriberController(ts));
+        Runnable subscriberTask = new TopicSubscriberController(ts);
+        subscriberExecutor.submit(subscriberTask);
             ///  Executor picks a thread from its pool. Calls the below run() method. And it will be in waiting state
             /// new TopicSubscriberController(ts).run();
 
@@ -69,6 +71,25 @@ public class KafkaController {
         }
         System.out.println("Message \"" + message.getMessage() + "\" published to topic: " + topic.getTopicName());
     }
+
+    /**
+     *So the way to "know" what to put inside synchronized(...) is: go find where .wait() was called, and copy that same object reference.
+     *
+     * // subscriber side (somewhere else in code):
+     * synchronized (topicSubscriber) {
+     *     topicSubscriber.wait();   // <-- waiting ON topicSubscriber
+     * }
+     *
+     * // publisher side (your code):
+     * synchronized (topicSubscriber) {   // <-- must match: same object
+     *     topicSubscriber.notify();
+     *
+     * 2. What happens without synchronized?
+     *
+     * topicSubscriber.notify();   // no synchronized wrapper
+     *
+     * This throws IllegalMonitorStateException immediately at runtime.
+     */
 
     // Resets the offset for the given subscriber on the specified topic.
     public void resetOffset(String topicId, ISubscriber subscriber, int newOffset) {

@@ -1,0 +1,22 @@
+1. What is the Interpreter Pattern?
+
+It is a behavioral design pattern that provides a way to evaluate expressions in a language by defining a grammar.
+Based on Context the interpret will happen.
+
+-> Defines a way grammer to evaluate the expression.
+
+2️⃣ What are the key components of the Interpreter Pattern?
+
+✅ Abstract Expression, Terminal Expression, Non-Terminal Expression, Context, and Client.
+
+3️⃣ Where is the Interpreter Pattern used in real life?
+
+✅ SQL Parsers, Regular Expressions, Rule-Based Systems, Compilers.
+
+5️⃣ Why is the Interpreter Pattern not recommended for complex grammars?
+
+✅ Because it increases code complexity and reduces performance due to recursive parsing.
+
+6️⃣ How can we optimize the Interpreter Pattern?
+
+✅ By using Memoization, Abstract Syntax Trees (ASTs), or pre-compiling expressions.

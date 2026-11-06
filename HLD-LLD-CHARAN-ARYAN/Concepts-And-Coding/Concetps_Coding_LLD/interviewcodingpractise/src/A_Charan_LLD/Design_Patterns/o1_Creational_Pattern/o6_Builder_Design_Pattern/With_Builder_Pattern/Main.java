@@ -10,5 +10,12 @@ public class Main {
         System.out.println(car);
 
         Car car1 = new Car.Builder("BMW", 4).addAirbags().build();
+
+
+        // same as below
+
+        Car.Builder b = new Car.Builder("BMW", 4);
+        b.addAirbags();
+        b.addMusicSystem();
     }
 }

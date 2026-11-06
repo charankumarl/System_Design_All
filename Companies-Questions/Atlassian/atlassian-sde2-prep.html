@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlassian SDE-2 (P40) Prep Sheet</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --text:#1b1f27; --muted:#5c6370; --border:#e2e4e9;
+  --accent:#0052cc; --accent-soft:#e9f0ff;
+  --p0:#d1453b; --p0-soft:#fdeceb;
+  --p1:#b25e00; --p1-soft:#fff2e0;
+  --p2:#1f7a4d; --p2-soft:#e8f6ee;
+  --done:#1f7a4d;
+  --code-bg:#f0f1f4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161a; --card:#1c1f26; --text:#e8eaed; --muted:#9aa2ad; --border:#2c3038;
+    --accent:#5b9dff; --accent-soft:#1a2740;
+    --p0:#ff6b61; --p0-soft:#3a1f1e;
+    --p1:#ffb04d; --p1-soft:#3a2c14;
+    --p2:#4fd98a; --p2-soft:#15301f;
+    --done:#4fd98a;
+    --code-bg:#23262d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161a; --card:#1c1f26; --text:#e8eaed; --muted:#9aa2ad; --border:#2c3038;
+  --accent:#5b9dff; --accent-soft:#1a2740;
+  --p0:#ff6b61; --p0-soft:#3a1f1e;
+  --p1:#ffb04d; --p1-soft:#3a2c14;
+  --p2:#4fd98a; --p2-soft:#15301f;
+  --done:#4fd98a;
+  --code-bg:#23262d;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.5;
+}
+.wrap{max-width:980px; margin:0 auto; padding:24px 16px 80px;}
+header.top{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+  flex-wrap:wrap; margin-bottom:20px;
+}
+h1{font-size:1.5rem; margin:0 0 4px;}
+.sub{color:var(--muted); font-size:0.9rem;}
+.theme-toggle{
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;
+}
+.countdown{
+  background:var(--accent-soft); color:var(--accent); font-weight:600;
+  border-radius:10px; padding:10px 16px; font-size:0.95rem; white-space:nowrap;
+}
+nav.toc{
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;
+}
+nav.toc a{
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  text-decoration:none; padding:7px 12px; border-radius:20px; font-size:0.82rem;
+}
+nav.toc a:hover{border-color:var(--accent); color:var(--accent);}
+section{margin-bottom:36px;}
+h2{
+  font-size:1.15rem; display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:14px;
+}
+.progress-pill{
+  font-size:0.72rem; font-weight:600; color:var(--muted); background:var(--code-bg);
+  padding:3px 9px; border-radius:12px; margin-left:auto;
+}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:16px 18px; margin-bottom:12px;
+}
+.focus-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px;}
+.focus-card{
+  background:var(--card); border:1px solid var(--border); border-left:4px solid var(--p0);
+  border-radius:10px; padding:14px 16px;
+}
+.focus-card h3{margin:0 0 6px; font-size:0.98rem;}
+.focus-card p{margin:0; font-size:0.85rem; color:var(--muted);}
+.badge{
+  display:inline-block; font-size:0.68rem; font-weight:700; letter-spacing:0.03em;
+  padding:2px 8px; border-radius:6px; text-transform:uppercase; margin-right:6px;
+}
+.badge.p0{background:var(--p0-soft); color:var(--p0);}
+.badge.p1{background:var(--p1-soft); color:var(--p1);}
+.badge.p2{background:var(--p2-soft); color:var(--p2);}
+.item{
+  display:flex; align-items:flex-start; gap:10px; padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.item:last-child{border-bottom:none;}
+.item input[type="checkbox"]{
+  margin-top:4px; width:17px; height:17px; accent-color:var(--accent); cursor:pointer; flex-shrink:0;
+}
+.item-body{flex:1;}
+.item-title{font-weight:600; font-size:0.95rem;}
+.item.done .item-title{text-decoration:line-through; color:var(--muted);}
+.item-meta{font-size:0.8rem; color:var(--muted); margin-top:3px;}
+.item-detail{font-size:0.85rem; margin-top:8px; color:var(--text);}
+.item-detail ul{margin:6px 0 0 18px; padding:0;}
+.item-detail li{margin-bottom:3px;}
+.tag{
+  display:inline-block; font-size:0.72rem; background:var(--code-bg); color:var(--muted);
+  padding:2px 8px; border-radius:6px; margin-right:4px; margin-top:4px;
+}
+.src{font-size:0.72rem; color:var(--muted); margin-top:6px;}
+.src a{color:var(--accent); text-decoration:none;}
+table{width:100%; border-collapse:collapse; font-size:0.88rem;}
+th{text-align:left; color:var(--muted); font-weight:600; font-size:0.78rem; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid var(--border);}
+td{padding:10px 10px; border-bottom:1px solid var(--border); vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.note{
+  background:var(--accent-soft); border-radius:10px; padding:12px 16px; font-size:0.85rem;
+  color:var(--text); margin-bottom:16px;
+}
+.sources{font-size:0.82rem; color:var(--muted);}
+.sources li{margin-bottom:6px;}
+.sources a{color:var(--accent); text-decoration:none;}
+footer{text-align:center; color:var(--muted); font-size:0.78rem; margin-top:40px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Atlassian SDE-2 / P40 — Interview Prep Sheet</h1>
+    <div class="sub">Compiled from candidate-reported interview experiences (LeetCode Discuss, Glassdoor, Blind, Medium, roundz.substack.com). Not an official question bank — treat as weighted probability, not certainty.</div>
+  </div>
+  <div class="countdown">Interview: ~1 week out (scheduled early Nov 2026)</div>
+</header>
+
+<nav class="toc">
+  <a href="#process">Interview Process</a>
+  <a href="#focus">Top Focus (do these first)</a>
+  <a href="#dsa">DSA</a>
+  <a href="#lld">LLD / Code Design</a>
+  <a href="#hld">HLD / System Design</a>
+  <a href="#sources">Sources</a>
+</nav>
+
+<section id="process">
+  <h2>Interview Process (as reported for SDE-2 / P40)</h2>
+  <div class="card">
+    <table>
+      <tr><th>Round</th><th>Format</th><th>What's evaluated</th></tr>
+      <tr><td>0. Karat screen</td><td>3rd-party technical screen — 1 DSA problem + rapid-fire system design (4–5 mini scenarios in 20–25 min)</td><td>Baseline coding + breadth of design thinking</td></tr>
+      <tr><td>1. DSA #1</td><td>45–60 min, 1–2 medium LeetCode-style problems</td><td>Correctness, edge cases, complexity</td></tr>
+      <tr><td>2. DSA #2 / Code Design</td><td>Often a hybrid — a "design + implement" prompt (Snake Game, Rate Limiter, Middleware Router)</td><td>Working code + unit tests + handling live requirement changes</td></tr>
+      <tr><td>3. System Design (HLD)</td><td>60 min, one product-flavored prompt</td><td>Clarifying questions, FR/NFR, API, data model, scaling, trade-offs — candidates repeatedly get downleveled for <b>not asking enough clarifying questions</b></td></tr>
+      <tr><td>4. Values round</td><td>~45 min, behavioral, mapped to Atlassian's 5 values</td><td>Concrete stories, not technical depth</td></tr>
+      <tr><td>5. Hiring Manager</td><td>Techno-managerial + behavioral</td><td>Ownership, conflict handling, past failures</td></tr>
+    </table>
+  </div>
+  <div class="note">
+    Recurring theme across <i>every</i> write-up: interviewers push for <b>clean, extensible, working code with tests</b> — not whiteboard pseudocode — and in system design they explicitly penalize candidates who don't ask clarifying questions before diving in, even on "obvious" requirements.
+  </div>
+</section>
+
+<section id="focus">
+  <h2>Top Focus — prepare these first <span class="progress-pill" id="prog-focus"></span></h2>
+  <div class="focus-grid">
+    <div class="focus-card">
+      <h3><span class="badge p0">P0</span>Tag Management System (HLD)</h3>
+      <p>The single most-repeated Atlassian system design question, across 2022–2026 reports, in almost every variant (tag design, tag management for Jira/Confluence, tag popularity tracking, top-K popular tags). If you prepare one HLD deeply, make it this one.</p>
+    </div>
+    <div class="focus-card">
+      <h3><span class="badge p0">P0</span>Snake Game (LLD / Code Design)</h3>
+      <p>Most-repeated code-design prompt. Always comes with live-changing requirements (wrap-around vs. game-over) and concurrency follow-ups (simultaneous key presses). Practice writing it with unit tests, not just logic.</p>
+    </div>
+    <div class="focus-card">
+      <h3><span class="badge p0">P0</span>API Rate Limiter (LLD)</h3>
+      <p>Second most-repeated LLD/code-design prompt. Token bucket + sliding window + per-user/per-API limiting + thread safety. One report had the interviewer push toward a Trie-based "Middleware Router" variant — know how routing/rate-limiting can combine.</p>
+    </div>
+    <div class="focus-card">
+      <h3><span class="badge p1">P1</span>Web Crawler / URL Scraper (HLD)</h3>
+      <p>Third most-repeated HLD prompt. Queue + worker + dedup + retries. One candidate was downleveled here specifically for skipping clarifying questions — ask about scale, politeness/rate limits, and freshness before architecture.</p>
+    </div>
+    <div class="focus-card">
+      <h3><span class="badge p1">P1</span>Intervals / Scheduling DSA</h3>
+      <p>Merge Intervals, Tennis Court Booking (scheduling + conflict detection), and "mostly interval" problems show up repeatedly in the DSA rounds. This topic has outsized weight relative to how little most people revise it.</p>
+    </div>
+    <div class="focus-card">
+      <h3><span class="badge p1">P1</span>Top-K / Frequency DSA</h3>
+      <p>Top-K Frequent Elements/Words, Stock Price Fluctuation (LC 2034), tag-popularity tracking (incr/decr/most-popular) — all heap + hashmap pattern. Shows up in both DSA rounds and as the backbone of the Tag Management HLD.</p>
+    </div>
+  </div>
+</section>
+
+<section id="dsa">
+  <h2>1. DSA <span class="progress-pill" id="prog-dsa"></span></h2>
+  <div class="note">You have LeetCode Premium — use the "Companies: Atlassian" filter there for the live, current list. This list below is what's independently corroborated across public write-ups, grouped by pattern so you revise by concept, not just by problem.</div>
+  <div class="card" id="dsa-list"></div>
+</section>
+
+<section id="lld">
+  <h2>2. LLD / Code Design <span class="progress-pill" id="prog-lld"></span></h2>
+  <div class="note">Atlassian's official guide calls this round <b>"Code Design"</b>, not classic LLD — you're expected to produce real, running, testable code (Java), not just a class diagram. Favor SOLID, clear interfaces, and at least a couple of unit tests for every design.</div>
+  <div class="card" id="lld-list"></div>
+</section>
+
+<section id="hld">
+  <h2>3. HLD / System Design <span class="progress-pill" id="prog-hld"></span></h2>
+  <div class="note">60-minute practical discussion. For every question below: state FR/NFR out loud, ask 3–5 clarifying questions before architecture (candidates get downleveled for skipping this), then cover API → data model → high-level architecture → scaling/bottlenecks → failure modes.</div>
+  <div class="card" id="hld-list"></div>
+</section>
+
+<section id="sources">
+  <h2>Sources</h2>
+  <ul class="sources">
+    <li><a href="https://roundz.substack.com/p/interview-experience-atlassian-sde2-p40" target="_blank">roundz.substack.com — Atlassian SDE2 P40 interview experience</a> (Snake Game, Tagging System HLD, round-by-round)</li>
+    <li><a href="https://leetcode.com/discuss/post/8293408/atlassian-interview-experience-p50p40-by-21ky/" target="_blank">LeetCode Discuss — Atlassian P50/P40 interview experience</a> (Tennis Court Booking, Middleware Router/Trie, Web Crawler)</li>
+    <li><a href="https://leetcode.com/discuss/interview-experience/6990017" target="_blank">LeetCode Discuss — Atlassian SDE-2 Backend interview experience</a> (Karat: 5 system design + 2 DSA, Snake Game LLD, Stock Price Fluctuation, Tag design HLD)</li>
+    <li><a href="https://www.glassdoor.co.in/Interview/Atlassian-Sde-2-Interview-Questions-EI_IE115699.0,9_KO10,15.htm" target="_blank">Glassdoor — Atlassian SDE-2 Interview Questions</a> (Rate limiter LLD, ambiguous HLD feedback)</li>
+    <li><a href="https://www.intervue.io/blog/atlassian-interview-experience-india" target="_blank">Intervue.io — Atlassian Interview Experience India</a> (HLD prompt list: URL scraper, tagging, Confluence feed, web crawler, hierarchical storage, color picker; File Storage System LLD)</li>
+    <li><a href="https://leetcode.com/discuss/interview-experience/1504593/atlassian-sde-2-p4-september-2021-bangalore-offer" target="_blank">LeetCode Discuss — Atlassian SDE-2 P4 Bangalore offer</a> (API Rate Limiter LLD)</li>
+    <li><a href="https://www.geeksforgeeks.org/interview-experiences/atlassian-interview-experience-for-sde/" target="_blank">GeeksforGeeks — Atlassian Interview Experience for SDE</a> (Subarray product < K, Google-Sheets-like HLD)</li>
+    <li><a href="https://medium.com/@priyabansal0919/sde-2-interview-experience-at-atlassian-part-2-0da938a60258" target="_blank">Medium — SDE-2 Interview Experience at Atlassian, Part 2</a></li>
+    <li><a href="https://medium.com/@priyabansal0919/atlassian-sde-2-interview-my-experience-takeaways-part-1-fb83929d0066" target="_blank">Medium — Atlassian SDE-2 Interview: Experience & Takeaways, Part 1</a></li>
+  </ul>
+</section>
+
+<footer>Progress saved locally in this browser only. Re-check this file against LeetCode Premium's "Companies: Atlassian" filter closer to interview day.</footer>
+</div>
+
+<script>
+const DATA = {
+  dsa: [
+    {id:"dsa-intervals", p:"p1", title:"Merge Intervals", meta:"Pattern: sort + merge — reported pattern: \"mostly interval problems\" in technical rounds", detail:["Also practice: Insert Interval, Non-overlapping Intervals"]},
+    {id:"dsa-tennis", p:"p1", title:"Tennis Court Booking (with 2 follow-ups)", meta:"Pattern: interval scheduling / conflict detection — reported in P50/P40 round 1", detail:["Expect follow-ups that add constraints live (multiple courts, cancellations) — practice extending a working solution under interviewer pressure, not just solving once."]},
+    {id:"dsa-stock", p:"p0", title:"Stock Price Fluctuation — LeetCode 2034", meta:"Pattern: two heaps / ordered structure for max, min, current, latest", detail:[]},
+    {id:"dsa-subarray", p:"p1", title:"Subarrays with Product Less Than K — LeetCode 713", meta:"Pattern: sliding window", detail:[]},
+    {id:"dsa-topkwords", p:"p1", title:"Top K Frequent Words — LeetCode 692", meta:"Pattern: hashmap + heap / bucket sort", detail:[]},
+    {id:"dsa-topkelements", p:"p1", title:"Top K Frequent Elements — LeetCode 347", meta:"Pattern: hashmap + heap — same family as tag-popularity HLD", detail:[]},
+    {id:"dsa-tagpop", p:"p0", title:"Tag Popularity Tracker (increment / decrement / get most popular)", meta:"Pattern: custom — hashmap + max-heap or TreeMap of counts; follow-up scales to \"last 24 hours\"", detail:["Reported directly as a DS/Algo round problem tied to the Tag Management HLD — practice this one specifically, it bridges DSA and HLD prep."]},
+    {id:"dsa-rankteams", p:"p2", title:"Rank Teams by Votes — LeetCode 1366", meta:"Pattern: custom comparator / counting sort", detail:[]},
+    {id:"dsa-snakegamealgo", p:"p2", title:"Snake Game — LeetCode 353 (algo-only version)", meta:"Pattern: deque — do this before the full LLD version so the core logic is already automatic", detail:[]},
+    {id:"dsa-lca", p:"p2", title:"LCA of a Binary Tree — LeetCode 236", meta:"Pattern: tree recursion", detail:[]},
+    {id:"dsa-prefixsuffix", p:"p1", title:"Prefix & Suffix Array problems", meta:"Pattern: precompute arrays — reported in an Atlassian online assessment", detail:[]},
+    {id:"dsa-graph", p:"p2", title:"Graph traversal (generic) — BFS/DFS delivery-route style problem", meta:"Pattern: BFS/DFS — reported as an unnamed graph problem in OA", detail:[]},
+    {id:"dsa-bruteopt", p:"p2", title:"Any medium where brute-force → optimize is the real test", meta:"Reported pattern: round 2 is often a medium where the interviewer wants to see you optimize live and discuss edge cases, more than see you solve instantly", detail:[]}
+  ],
+  lld: [
+    {id:"lld-snake", p:"p0", title:"Snake Game", meta:"Most-repeated LLD/code-design prompt across all years", detail:[
+      "Classes: Snake, Food, Board, Direction.",
+      "Move in 4 directions; collision with walls and self.",
+      "Food consumption + growth.",
+      "Reported live requirement change: snake leaving the board wraps to the opposite side instead of ending the game — build for this flexibility, don't hardcode game-over-on-wall.",
+      "Follow-up (asked almost every time): optimize linked-list implementation with a Deque.",
+      "Follow-up (asked almost every time): handle simultaneous/concurrent direction key presses — discuss synchronization.",
+      "Deliverable expected: working code + unit tests, not just a design doc."
+    ]},
+    {id:"lld-ratelimiter", p:"p0", title:"API Rate Limiter", meta:"Second most-repeated LLD/code-design prompt; one report escalated this into a \"Middleware Router\" needing a Trie", detail:[
+      "Implement Token Bucket, then be ready to compare with Fixed Window and Sliding Window.",
+      "Per-user AND per-API rate limiting.",
+      "Thread safety — this gets probed directly (\"how would this behave under concurrent requests?\").",
+      "Configurable limits; sketch how you'd back it with Redis for a distributed version.",
+      "Stretch (reported once): route matching via Trie when limiter is attached to a path-based middleware — know Trie basics cold."
+    ]},
+    {id:"lld-filestorage", p:"p1", title:"File Storage System", meta:"Reported in P40 Backend round 3; also listed as a top LLD prompt by Intervue.io", detail:[
+      "CRUD on files; directory hierarchy; file metadata.",
+      "Calculate directory size recursively; return Top-N largest directories.",
+      "Follow-up asked: trade-offs of List vs Set for storing file references — be ready to justify data-structure choice out loud.",
+      "Follow-up asked: storage vs. retrieval speed trade-offs (time vs. space complexity discussion)."
+    ]},
+    {id:"lld-featureflag", p:"p1", title:"Feature Flag Library", meta:"Reported as a direct Atlassian LLD prompt", detail:[
+      "Create/update flags, enable/disable, user-based targeting, percentage rollout.",
+      "Environment-specific configuration.",
+      "Cache + refresh config; thread-safe evaluation path."
+    ]},
+    {id:"lld-filesystem", p:"p2", title:"File System supporting directory size (+ extension: Top-N largest directories)", meta:"Reported as a direct, two-part Atlassian LLD prompt", detail:[]},
+    {id:"lld-other", p:"p2", title:"Extension bench: Parking Lot · Elevator System · Notification Service · Task Scheduler · Logging Framework · LRU/LFU/TTL Cache · Vending Machine · Meeting Room Booking · Splitwise", meta:"Not directly reported for Atlassian, but standard LLD extensions worth 1 pass each if time allows", detail:[
+      "Priority order if short on time: LRU/TTL Cache → Meeting Room Booking (concurrency/locking, overlaps with the Tennis Court Booking DSA pattern) → Notification Service (Observer/Factory)."
+    ]}
+  ],
+  hld: [
+    {id:"hld-tag", p:"p0", title:"Design a Tag Management System for Jira & Confluence", meta:"The single most-repeated Atlassian HLD question, 2022–2026", detail:[
+      "FR: create/attach/detach tags, search by tag, list popular tags, support both Jira issues and Confluence pages (multi-entity tagging).",
+      "NFR: low-latency tag search/autocomplete, high read:write ratio, scale to Atlassian's cross-product volume.",
+      "Cover: schema for many-to-many tag↔entity mapping, indexing strategy for search, how you'd compute \"most popular tags\" (ties to the Top-K DSA pattern above) and scope it to all-time vs. last-24h.",
+      "Explicitly discuss scalability, efficiency, and storage trade-offs — reported as the interviewer's stated focus."
+    ]},
+    {id:"hld-crawler", p:"p1", title:"Design a Web Crawler / URL Scraping System", meta:"Third most-repeated HLD prompt — a candidate was downleveled here specifically for insufficient clarifying questions", detail:[
+      "Ask first: scale (URLs/day), politeness/robots.txt + rate limits per domain, freshness requirements, duplicate detection strategy.",
+      "Architecture: URL frontier/queue, worker pool, dedup (bloom filter or hash set), retry/backoff, storage for fetched content.",
+      "Cover failure modes: dead links, infinite redirect loops, slow/unresponsive domains."
+    ]},
+    {id:"hld-feed", p:"p1", title:"Design Confluence Trending / Popular Feed", meta:"Repeated across multiple HLD prompt lists", detail:[
+      "Ranking signal mix: views, likes, comments, recency decay.",
+      "Discuss: precomputed rankings (batch) vs. on-demand scoring, cache invalidation as engagement changes."
+    ]},
+    {id:"hld-ratelimiter-dist", p:"p1", title:"Design a Distributed API Rate Limiter", meta:"HLD version of the LLD rate limiter — know both levels", detail:[
+      "Redis-backed counters, clock sync issues across nodes, consistency vs. availability trade-off under limiter-node failure."
+    ]},
+    {id:"hld-ticketing", p:"p2", title:"Design a Ticketing / Issue Management System (Jira-flavored)", meta:"Repeated across prep guides; use real Jira workflows as your mental model", detail:[
+      "Workflow/state transitions, concurrency on concurrent edits, permission model (who can transition/assign).",
+      "Reported adjacent topic: Jira permission model at scale — custom roles + project-level overrides."
+    ]},
+    {id:"hld-hierarchical", p:"p2", title:"Design Hierarchical Data Storage (+ retrieve all children)", meta:"Repeated HLD prompt, pairs with the File System LLD question", detail:["Tree/adjacency storage trade-offs: adjacency list vs. nested sets vs. closure table for fast subtree queries."]},
+    {id:"hld-docs", p:"p2", title:"Design a Google-Docs-like Collaborative Editor (Confluence-flavored)", meta:"Repeated across prep guides", detail:["Real-time sync via OT or CRDT; conflict resolution; presence."]},
+    {id:"hld-rbac", p:"p2", title:"Design an RBAC / Resource Access Control System", meta:"Listed as high-priority in prep guides, not yet independently corroborated by a first-hand report", detail:[]},
+    {id:"hld-sheets", p:"p2", title:"Design a Google-Sheets-like system", meta:"Directly reported once (GeeksforGeeks writeup)", detail:["Covered: FR/NFR, API design, client-server split, DB schema with example queries, optimization for concurrent cell edits."]},
+    {id:"hld-monitoring", p:"p2", title:"Design monitoring/reliability for 99.99% availability", meta:"Listed in prep guides as a possible prompt or follow-up pressure-test on any HLD", detail:[]}
+  ]
+};
+
+function render(){
+  const sections = [["dsa","dsa-list"],["lld","lld-list"],["hld","hld-list"]];
+  sections.forEach(([key, domId])=>{
+    const container = document.getElementById(domId);
+    container.innerHTML = "";
+    DATA[key].forEach(entry=>{
+      const row = document.createElement("div");
+      row.className = "item";
+      row.id = "row-"+entry.id;
+      const detailHtml = entry.detail && entry.detail.length
+        ? `<div class="item-detail"><ul>${entry.detail.map(d=>`<li>${d}</li>`).join("")}</ul></div>` : "";
+      row.innerHTML = `
+        <input type="checkbox" data-id="${entry.id}">
+        <div class="item-body">
+          <div class="item-title"><span class="badge ${entry.p}">${entry.p.toUpperCase()}</span>${entry.title}</div>
+          <div class="item-meta">${entry.meta}</div>
+          ${detailHtml}
+        </div>`;
+      container.appendChild(row);
+    });
+  });
+  loadProgress();
+}
+
+function storageKey(){ return "atlassian-prep-progress"; }
+
+function loadProgress(){
+  let saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(storageKey()) || "{}"); }catch(e){ saved = {}; }
+  document.querySelectorAll('input[type="checkbox"][data-id]').forEach(cb=>{
+    const id = cb.dataset.id;
+    if(saved[id]){ cb.checked = true; cb.closest(".item").classList.add("done"); }
+    cb.addEventListener("change", ()=>{
+      cb.closest(".item").classList.toggle("done", cb.checked);
+      saveProgress();
+      updateCounters();
+    });
+  });
+  updateCounters();
+}
+
+function saveProgress(){
+  const data = {};
+  document.querySelectorAll('input[type="checkbox"][data-id]').forEach(cb=>{
+    if(cb.checked) data[cb.dataset.id] = true;
+  });
+  try{ localStorage.setItem(storageKey(), JSON.stringify(data)); }catch(e){}
+}
+
+function updateCounters(){
+  const groups = {dsa:"prog-dsa", lld:"prog-lld", hld:"prog-hld"};
+  Object.entries(groups).forEach(([key, pillId])=>{
+    const ids = DATA[key].map(e=>e.id);
+    const total = ids.length;
+    const done = ids.filter(id=>{
+      const cb = document.querySelector(`input[data-id="${id}"]`);
+      return cb && cb.checked;
+    }).length;
+    const pill = document.getElementById(pillId);
+    if(pill) pill.textContent = `${done} / ${total}`;
+  });
+  const focusIds = [];
+  const focusPill = document.getElementById("prog-focus");
+  if(focusPill) focusPill.textContent = "";
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+1. What is the Composite Design Pattern?
+
+The Composite Pattern is a structural design pattern used when a group of objects should be treated in the same way as a single object.
+It allows you to compose objects into tree structures to represent part-whole hierarchies.
+
+2. Problem Without Composite Pattern
+
+Consider a file system where:
+
+A File is a leaf node.
+A Folder can contain both Files and other Folders.
+Without the Composite Pattern, you might write separate logic for Files and Folders, making your code complex.
+
+ex : Folder class has both Files and Folders.
+
+1. If new system comes like image. We will create a new image class.  But we need to change the existing code for Folder.
+
+2. We need to add new Image and create a code for this also. It violates OCP and SRP.
+--------------------------------------------------------------------------------------------------------------------------------
+
+3. Solution: Composite Pattern
+
+The Composite Pattern solves this problem by defining a common interface (Component) for both File and Folder.
+This allows treating individual objects and compositions uniformly.
+
+Files and Folder are different and can work grouply also.
+
+If new system comes also, we just create new class, we wont modifiy the existing Folder class.
+-------------------------------------------------------------------------------------------------------------------------
+7. Advantages of Composite Pattern
+
+Feature	Benefit
+
+Uniformity	Treats individual objects and compositions the same way
+Scalability	Easily add new types (e.g., Shortcut component)
+Open-Closed Principle	No need to modify existing classes when adding new components
+Recursive Structure	Naturally supports tree structures
+
+8. Real-World Examples of Composite Pattern
+
+File Systems (Folders & Files)
+GUI Components (Windows, Buttons, Panels)
+Organizational Structures (Manager, Employees)
+Graphic Drawing Apps (Shapes, Groups of Shapes)

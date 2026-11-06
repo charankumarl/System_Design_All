@@ -128,11 +128,11 @@ Associations can be **unidirectional** (one object knows about another) or **bid
 using System;
 using System.Collections.Generic;
 
-class Book {
+class mdel.Book {
     public string Title { get; private set; }
     private Library library;
     
-    public Book(string title, Library library) {
+    public mdel.Book(string title, Library library) {
         Title = title;
         this.library = library;
     }
@@ -144,14 +144,14 @@ class Book {
 
 class Library {
     public string Name { get; private set; }
-    private List<Book> books;
+    private List<mdel.Book> books;
     
     public Library(string name) {
         Name = name;
-        books = new List<Book>();
+        books = new List<mdel.Book>();
     }
     
-    public void AddBook(Book book) {
+    public void AddBook(mdel.Book book) {
         books.Add(book);
     }
     
@@ -166,8 +166,8 @@ class Library {
 class BidirectionalAssociationExample {
     static void Main() {
         Library library = new Library("City Library");
-        Book book1 = new Book("1984", library);
-        Book book2 = new Book("Brave New World", library);
+        mdel.Book book1 = new mdel.Book("1984", library);
+        mdel.Book book2 = new mdel.Book("Brave New World", library);
         
         library.AddBook(book1);
         library.AddBook(book2);

@@ -32,7 +32,7 @@ func Run() {
 		fmt.Printf("Concert: %s at %s\n", concert.Artist, concert.Venue)
 	}
 
-	// Book tickets
+	// mdel.Book tickets
 	selectedSeats1 := concert1.Seats[:3] // Select first 3 seats
 	booking1, err := bookingSystem.BookTickets(user1, concert1, selectedSeats1)
 	if err != nil {
@@ -54,7 +54,7 @@ func Run() {
 		bookingSystem.CancelBooking(booking1.ID)
 	}
 
-	// Book tickets again
+	// mdel.Book tickets again
 	selectedSeats3 := concert1.Seats[3:5] // Select next 2 seats
 	booking3, err := bookingSystem.BookTickets(user2, concert1, selectedSeats3)
 	if err != nil {

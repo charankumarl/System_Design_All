@@ -32,7 +32,7 @@ Booking* BookingSystem::createBooking(std::string showId, std::string customerNa
         }
     }
     
-    // Book all seats
+    // mdel.Book all seats
     for (int seatNumber : seats) {
         show->bookSeat(seatNumber);
     }
