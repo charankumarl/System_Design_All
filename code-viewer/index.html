@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>com.company — Code Viewer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="sidebar-backdrop"></div>
+  <div id="sidebar">
+    <div id="search-box">
+      <input id="search" type="text" placeholder="Search files..." autocomplete="off">
+    </div>
+    <div id="tree"></div>
+  </div>
+  <div id="main">
+    <div id="topbar">
+      <button id="menu-toggle">&#9776;</button>
+      <div id="breadcrumb">Select a file from the left to view its code</div>
+      <button id="copy-btn" style="display:none">Copy</button>
+    </div>
+    <div id="empty-state">com.company &rarr; pick a folder, then a file, to read the code here.</div>
+    <div id="code-area" style="display:none"><pre><code id="code-content"></code></pre></div>
+  </div>
+</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
